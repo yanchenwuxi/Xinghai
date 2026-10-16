@@ -16,6 +16,7 @@ import com.zaka.xinghai.R;
 import com.zaka.xinghai.core.App;
 import com.zaka.xinghai.net.HlsProxy;
 import com.zaka.xinghai.net.Http;
+import com.zaka.xinghai.net.Updater;
 import com.zaka.xinghai.net.M3u;
 import com.zaka.xinghai.store.Store;
 import com.zaka.xinghai.subtitle.SubStore;
@@ -105,6 +106,12 @@ public class PageMine extends Page {
             @Override
             public void run() {
                 clearCache();
+            }
+        });
+        addRow(list, "检查更新", R.drawable.ic_refresh, new Runnable() {
+            @Override
+            public void run() {
+                checkUpdate(true);
             }
         });
         addRow(list, "关于星海", R.drawable.ic_info, new Runnable() {
@@ -465,4 +472,98 @@ public class PageMine extends Page {
             return v;
         }
     }
+
+    private void checkUpdate(final boolean fromUser) {
+        Updater.check(act, null, new Updater.Listener() {
+            @Override
+            public void onChecking() {
+                if (fromUser) U.toast("正在检查更新…");
+            }
+
+            @Override
+            public void onLatest(String current) {
+                if (fromUser) U.toast("已是最新版 v" + current);
+            }
+
+            @Override
+            public void onAvailable(final Updater.Info info) {
+                String msg = "发现新版本 v" + info.versionName
+                        + "（" + info.versionCode + "）\n当前 v" + versionName() + "\n\n"
+                        + (U.empty(info.notes) ? "是否下载并安装？" : info.notes);
+                new AlertDialog.Builder(act)
+                        .setTitle("应用更新")
+                        .setMessage(msg)
+                        .setPositiveButton("下载安装", new android.content.DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(android.content.DialogInterface d, int w) {
+                                startDownload(info);
+                            }
+                        })
+                        .setNegativeButton("稍后", null)
+                        .show();
+            }
+
+            @Override
+            public void onProgress(int percent, long read, long total) {
+            }
+
+            @Override
+            public void onInstalling() {
+                U.toast("正在调起安装…");
+            }
+
+            @Override
+            public void onError(String msg) {
+                if (fromUser) U.toast(msg);
+            }
+        });
+    }
+
+    private void startDownload(final Updater.Info info) {
+        final android.app.ProgressDialog pd = new android.app.ProgressDialog(act);
+        pd.setTitle("下载更新");
+        pd.setMessage("准备下载…");
+        pd.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
+        pd.setMax(100);
+        pd.setCancelable(false);
+        pd.show();
+        Updater.downloadAndInstall(act, info, new Updater.Listener() {
+            @Override
+            public void onChecking() {
+            }
+
+            @Override
+            public void onLatest(String current) {
+            }
+
+            @Override
+            public void onAvailable(Updater.Info info) {
+            }
+
+            @Override
+            public void onProgress(int percent, long read, long total) {
+                pd.setProgress(percent);
+                pd.setMessage(percent + "%  (" + (read / 1024) + "KB)");
+            }
+
+            @Override
+            public void onInstalling() {
+                try {
+                    pd.dismiss();
+                } catch (Throwable ignored) {
+                }
+                U.toast("正在安装，请按系统提示确认");
+            }
+
+            @Override
+            public void onError(String msg) {
+                try {
+                    pd.dismiss();
+                } catch (Throwable ignored) {
+                }
+                U.toast(msg);
+            }
+        });
+    }
+
 }

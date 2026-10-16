@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   jvm-check:
     name: JVM 解析层自测
@@ -119,3 +122,27 @@ jobs:
           name: xinghai-signed-apk
           path: build/out/xinghai-signed.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release (供应用内更新)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          VER_NAME=$(grep versionName app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          VER_CODE=$(grep versionCode app/build.gradle | head -1 | sed 's/[^0-9]//g')
+          TAG="v${VER_NAME}"
+          APK="build/out/xinghai-signed.apk"
+          ASSET="xinghai-${VER_NAME}-${VER_CODE}.apk"
+          cp "$APK" "$ASSET"
+          # 删除同名 tag 的旧 release（允许覆盖发布）
+          gh release delete "$TAG" -y 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+          gh release create "$TAG" "$ASSET" \
+            --title "星海 ${TAG} (build ${VER_CODE})" \
+            --notes "应用内更新包
+
+版本名: ${VER_NAME}
+versionCode: ${VER_CODE}
+
+安装说明: 下载 APK 后在手机上允许「未知应用」即可；也可在 App「我的 → 检查更新」自动下载安装。"
