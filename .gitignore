@@ -9,3 +9,5 @@ local.properties
 *.dex
 classes*/
 keys/
+build/testout/
+build/stubs/

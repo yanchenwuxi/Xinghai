@@ -245,8 +245,8 @@ public final class Cms {
     /** vod_play_from / vod_play_url 拆线路与剧集；顺带做线路名/剧集名广告清洗 */
     public static void parsePlay(Vod v, String from, String urls) {
         if (U.empty(urls)) return;
-        String[] groups = urls.split("\$\$\$");
-        String[] names = U.empty(from) ? new String[0] : from.split("\$\$\$");
+        String[] groups = urls.split("\\$\\$\\$");
+        String[] names = U.empty(from) ? new String[0] : from.split("\\$\\$\\$");
         for (int i = 0; i < groups.length; i++) {
             String g = groups[i];
             if (U.empty(g)) continue;
