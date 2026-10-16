@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dip"
+    android:background="@drawable/bg_card"
+    android:orientation="vertical"
+    android:padding="12dip">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/site_name"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/site_speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dip"
+            android:textColor="@color/white_44"
+            android:textSize="11sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/site_use"
+            android:layout_width="wrap_content"
+            android:layout_height="24dip"
+            android:background="@drawable/bg_chip_on"
+            android:gravity="center"
+            android:paddingLeft="10dip"
+            android:paddingRight="10dip"
+            android:text="使用中"
+            android:textColor="@color/orange"
+            android:textSize="11sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/site_api"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dip"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:textColor="@color/white_44"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="32dip"
+        android:layout_marginTop="8dip"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/site_check"
+            android:layout_width="wrap_content"
+            android:layout_height="24dip"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:text="测速"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/site_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="24dip"
+            android:layout_marginLeft="8dip"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:text="编辑"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="0dip"
+            android:layout_height="1dip"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/site_del"
+            android:layout_width="wrap_content"
+            android:layout_height="24dip"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:text="删除"
+            android:textColor="@color/white_60"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

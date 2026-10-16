@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_bg"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/history_search"
+        android:layout_width="match_parent"
+        android:layout_height="38dip"
+        android:layout_marginLeft="10dip"
+        android:layout_marginTop="12dip"
+        android:layout_marginRight="10dip"
+        android:background="@drawable/bg_search_bar2"
+        android:gravity="center"
+        android:hint="搜索历史记录"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white_44"
+        android:textSize="14sp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_marginTop="8dip"
+        android:layout_marginBottom="5dip"
+        android:layout_weight="1">
+
+        <GridView
+            android:id="@+id/history_grid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:horizontalSpacing="2dip"
+            android:numColumns="3"
+            android:paddingLeft="4dip"
+            android:paddingRight="4dip"
+            android:verticalSpacing="6dip" />
+
+        <TextView
+            android:id="@+id/history_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="还没有播放记录"
+            android:textColor="@color/white_44"
+            android:textSize="13sp"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

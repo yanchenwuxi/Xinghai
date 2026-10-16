@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色板：对齐参照应用的深蓝底 + 橙色强调 -->
+    <color name="main_bg">#ff001a37</color>
+    <color name="main_bg_44">#8f001a37</color>
+    <color name="panel_bg">#ff1b1d24</color>
+    <color name="panel_bg_90">#e61b1d24</color>
+
+    <color name="orange">#ffffb40a</color>
+    <color name="orange2">#ffff5f00</color>
+    <color name="color_03DAC5">#ff03dac5</color>
+
+    <color name="white">#ffffffff</color>
+    <color name="white2">#fff3f3f3</color>
+    <color name="white_90">#1affffff</color>
+    <color name="white_60">#66ffffff</color>
+    <color name="white_44">#8fffffff</color>
+    <color name="white_20">#33ffffff</color>
+    <color name="white_12">#1fffffff</color>
+    <color name="white_94">#0fffffff</color>
+
+    <color name="black">#ff000000</color>
+    <color name="black_90">#e6000000</color>
+    <color name="black_80">#cc000000</color>
+    <color name="black_60">#66000000</color>
+    <color name="black_44">#8f000000</color>
+    <color name="black_20">#33000000</color>
+
+    <color name="gray">#ff808080</color>
+    <color name="gray_9c">#ff9c9c9c</color>
+    <color name="divider">#1fffffff</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- 收藏按钮的金色渐变 -->
+    <color name="gold_start">#ffedc75f</color>
+    <color name="gold_end">#fffee5a2</color>
+    <color name="gold_text">#ff694001</color>
+</resources>

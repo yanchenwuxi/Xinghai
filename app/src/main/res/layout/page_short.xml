@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_bg"
+    android:orientation="vertical"
+    android:paddingTop="30dip">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dip"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dip"
+        android:paddingRight="14dip">
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="短剧"
+            android:textColor="@color/white"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="24dip"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingLeft="10dip"
+            android:paddingRight="10dip"
+            android:text="换一批"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <ImageView
+            android:id="@+id/short_refresh"
+            android:layout_width="20dip"
+            android:layout_height="20dip"
+            android:layout_marginLeft="10dip"
+            android:alpha="0.85"
+            android:src="@drawable/ic_refresh" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/short_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="10dip"
+            android:paddingLeft="10dip"
+            android:paddingRight="10dip"
+            android:paddingTop="6dip"
+            android:paddingBottom="10dip"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/short_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="短剧数据加载中…"
+            android:textColor="@color/white_44"
+            android:textSize="13sp" />
+
+        <ProgressBar
+            android:id="@+id/short_loading"
+            android:layout_width="36dip"
+            android:layout_height="36dip"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/orange"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

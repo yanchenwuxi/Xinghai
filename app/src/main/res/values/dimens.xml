@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="tab_bar_height">55dip</dimen>
+    <dimen name="page_top_padding">30dip</dimen>
+
+    <dimen name="ts_10">10sp</dimen>
+    <dimen name="ts_11">11sp</dimen>
+    <dimen name="ts_12">12sp</dimen>
+    <dimen name="ts_13">13sp</dimen>
+    <dimen name="ts_14">14sp</dimen>
+    <dimen name="ts_16">16sp</dimen>
+    <dimen name="ts_18">18sp</dimen>
+    <dimen name="ts_20">20sp</dimen>
+    <dimen name="ts_36">36sp</dimen>
+
+    <dimen name="gap_4">4dip</dimen>
+    <dimen name="gap_6">6dip</dimen>
+    <dimen name="gap_8">8dip</dimen>
+    <dimen name="gap_10">10dip</dimen>
+    <dimen name="gap_12">12dip</dimen>
+    <dimen name="gap_14">14dip</dimen>
+    <dimen name="gap_16">16dip</dimen>
+
+    <dimen name="detail_poster_w">104dip</dimen>
+    <dimen name="detail_poster_h">140dip</dimen>
+    <dimen name="episode_min_h">35dip</dimen>
+    <dimen name="flag_h">30dip</dimen>
+    <dimen name="my_item_h">80dip</dimen>
+</resources>

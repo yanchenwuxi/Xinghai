@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">星海</string>
+
+    <string name="tab_home">主页</string>
+    <string name="tab_live">直播</string>
+    <string name="tab_short">短剧</string>
+    <string name="tab_history">历史/收藏</string>
+    <string name="tab_mine">我的</string>
+
+    <string name="search_hint">搜索影片</string>
+    <string name="hot_search">最近热搜</string>
+    <string name="search_history">搜索历史</string>
+    <string name="clear">清空</string>
+    <string name="refresh">刷新</string>
+    <string name="load_more">加载中…</string>
+    <string name="no_more">没有更多了</string>
+    <string name="empty">没有数据</string>
+
+    <string name="line">线路</string>
+    <string name="quality">画质</string>
+    <string name="episode">选集</string>
+    <string name="intro">简介</string>
+    <string name="collect">加入收藏</string>
+    <string name="collected">已收藏</string>
+    <string name="play">播放</string>
+    <string name="download">下载</string>
+    <string name="parse">解析</string>
+    <string name="quick_search">快搜</string>
+    <string name="player">播放器</string>
+    <string name="cast">投屏</string>
+    <string name="setting">设置</string>
+</resources>

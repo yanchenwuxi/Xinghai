@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card_sel"
+    android:orientation="vertical"
+    android:padding="4dip">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.zaka.xinghai.view.Poster
+            android:id="@+id/pic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/note"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|top"
+            android:layout_margin="4dip"
+            android:background="@drawable/bg_note"
+            android:paddingLeft="5dip"
+            android:paddingRight="5dip"
+            android:paddingTop="1dip"
+            android:paddingBottom="1dip"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/ep"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_scrim_bottom"
+            android:ellipsize="end"
+            android:paddingLeft="5dip"
+            android:paddingRight="5dip"
+            android:paddingBottom="3dip"
+            android:paddingTop="10dip"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dip"
+            android:layout_gravity="bottom"
+            android:max="1000"
+            android:progressDrawable="@drawable/seek_progress"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/play_icon"
+            android:layout_width="34dip"
+            android:layout_height="34dip"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_circle_black60"
+            android:padding="8dip"
+            android:src="@drawable/ic_play"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dip"
+        android:ellipsize="end"
+        android:lineSpacingExtra="2dip"
+        android:maxLines="2"
+        android:textColor="@color/white"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/sub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dip"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:textColor="@color/white_44"
+        android:textSize="10sp"
+        android:visibility="gone" />
+</LinearLayout>

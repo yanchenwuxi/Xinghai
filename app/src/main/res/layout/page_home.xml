@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_bg"
+    android:orientation="vertical"
+    android:paddingTop="30dip">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dip"
+        android:paddingRight="14dip">
+
+        <LinearLayout
+            android:id="@+id/search_box"
+            android:layout_width="0dip"
+            android:layout_height="36dip"
+            android:layout_weight="1"
+            android:background="@drawable/bg_search_bar"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip">
+
+            <ImageView
+                android:layout_width="16dip"
+                android:layout_height="16dip"
+                android:src="@drawable/ic_search"
+                android:alpha="0.5" />
+
+            <TextView
+                android:id="@+id/search_hint"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dip"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:text="@string/search_hint"
+                android:textColor="@color/white_44"
+                android:textSize="13sp" />
+
+            <ImageView
+                android:id="@+id/site_switch"
+                android:layout_width="18dip"
+                android:layout_height="18dip"
+                android:src="@drawable/ic_site"
+                android:alpha="0.6" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/refresh"
+            android:layout_width="22dip"
+            android:layout_height="22dip"
+            android:layout_marginLeft="12dip"
+            android:src="@drawable/ic_refresh"
+            android:alpha="0.85" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dip"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <HorizontalScrollView
+            android:id="@+id/cate_scroll"
+            android:layout_width="0dip"
+            android:layout_height="25dip"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/cate_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip" />
+        </HorizontalScrollView>
+
+        <ImageView
+            android:id="@+id/cate_menu"
+            android:layout_width="22dip"
+            android:layout_height="22dip"
+            android:layout_marginLeft="8dip"
+            android:layout_marginRight="10dip"
+            android:alpha="0.35"
+            android:src="@drawable/ic_sort" />
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/filter_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dip"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/filter_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip" />
+    </HorizontalScrollView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_marginTop="6dip"
+        android:layout_weight="1">
+
+        <GridView
+            android:id="@+id/grid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:horizontalSpacing="2dip"
+            android:numColumns="3"
+            android:paddingLeft="4dip"
+            android:paddingRight="4dip"
+            android:scrollbarStyle="outsideOverlay"
+            android:verticalSpacing="6dip" />
+
+        <TextView
+            android:id="@+id/foot"
+            android:layout_width="match_parent"
+            android:layout_height="36dip"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:textColor="@color/white_44"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/empty_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/empty"
+                android:textColor="@color/white_44"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:text="点这里重试"
+                android:textColor="@color/orange"
+                android:textSize="13sp"
+                android:id="@+id/retry" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/loading"
+            android:layout_width="36dip"
+            android:layout_height="36dip"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/orange"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

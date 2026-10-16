@@ -1,0 +1,38 @@
+// 星海 · Gradle 工程（Android Studio 直接打开即可编译）
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.zaka.xinghai'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.zaka.xinghai"
+        minSdk 21
+        targetSdk 34
+        versionCode 3
+        versionName "2.0.0"
+    }
+
+    // 命令行脚本侧用 manifest 里的 package 属性，Android Studio 侧用 namespace，
+    // 两边共用同一份源码，所以这里不做 manifest 改写。
+    lint {
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+// 零第三方依赖
+dependencies {
+}
