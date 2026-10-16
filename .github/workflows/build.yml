@@ -102,18 +102,20 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
 
-      - name: Build APK
+      - name: Build & sign APK
         run: |
           set -e
           export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          bash build/build.sh
-          ls -la build/out/ || true
+          bash build/build.sh --sign
+          ls -la build/out/
+          # 校验签名
+          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose build/out/xinghai-signed.apk
 
-      - name: Upload APK
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: xinghai-apk
-          path: build/out/*.apk
-          if-no-files-found: warn
+          name: xinghai-signed-apk
+          path: build/out/xinghai-signed.apk
+          if-no-files-found: error

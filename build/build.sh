@@ -73,18 +73,42 @@ cp "$OUT/base.apk" "$OUT/xinghai-unsigned.apk"
 (cd "$DEX" && zip -q -X "$OUT/xinghai-unsigned.apk" classes*.dex)
 "$BT/zipalign" -f -p 4 "$OUT/xinghai-unsigned.apk" "$OUT/xinghai-aligned.apk"
 
-if [ "$1" = "--sign" ]; then
-  KS="${KEYSTORE:-$ROOT/keys/starfilm.p12}"
-  ALIAS="${KEY_ALIAS:-starfilm}"
-  PASS="${KEY_PASS:-starfilm123}"
+# 默认自动签名：无密钥时生成 debug 密钥（仅用于安装验证，非发布密钥）
+SIGN="${1:-}"
+if [ "$SIGN" = "--sign" ] || [ "$SIGN" = "" ] || [ "$SIGN" = "--debug-sign" ]; then
+  KS="${KEYSTORE:-}"
+  ALIAS="${KEY_ALIAS:-}"
+  PASS="${KEY_PASS:-}"
+  if [ -z "$KS" ] || [ ! -f "$KS" ]; then
+    if [ -f "$ROOT/keys/starfilm.p12" ]; then
+      KS="$ROOT/keys/starfilm.p12"
+      ALIAS="${KEY_ALIAS:-starfilm}"
+      PASS="${KEY_PASS:-starfilm123}"
+    else
+      mkdir -p "$ROOT/keys"
+      KS="$ROOT/keys/debug.keystore"
+      ALIAS="androiddebugkey"
+      PASS="android"
+      if [ ! -f "$KS" ]; then
+        echo "[sign] 生成 debug 密钥 $KS"
+        keytool -genkeypair -v -keystore "$KS" -storetype JKS \
+          -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass "$PASS" -keypass "$PASS" \
+          -dname "CN=Xinghai Debug,O=Xinghai,C=CN"
+      fi
+    fi
+  fi
+  echo "[sign] keystore=$KS alias=$ALIAS"
   "$BT/apksigner" sign --ks "$KS" --ks-key-alias "$ALIAS" \
     --ks-pass "pass:$PASS" --key-pass "pass:$PASS" \
     --v1-signing-enabled true --v2-signing-enabled true \
     --out "$OUT/xinghai-signed.apk" "$OUT/xinghai-aligned.apk"
-  echo "完成: $OUT/xinghai-signed.apk"
+  # 清理中间包，避免误装
+  rm -f "$OUT/base.apk" "$OUT/xinghai-unsigned.apk" "$OUT/xinghai-aligned.apk"
+  echo "完成: $OUT/xinghai-signed.apk（可安装）"
   ls -la "$OUT"/*.apk
   exit 0
 fi
 
-echo "完成: $OUT/xinghai-aligned.apk（未签名）"
+echo "完成: $OUT/xinghai-aligned.apk（未签名，现代 Android 无法直接安装）"
 ls -la "$OUT"/*.apk
