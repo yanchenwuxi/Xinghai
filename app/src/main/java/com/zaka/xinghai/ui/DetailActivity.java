@@ -94,8 +94,13 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
         expand.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 右下角全屏：直接进横屏播放
-                PlayActivity.goLand(DetailActivity.this, vod, flagIndex, epIndex);
+                // 无缝横屏：交接播放器，不重新加载
+                if (player != null && player.isPrepared()) {
+                    player.beginHandoff();
+                    PlayActivity.goLandContinue(DetailActivity.this, vod, flagIndex, epIndex);
+                } else {
+                    PlayActivity.goLand(DetailActivity.this, vod, flagIndex, epIndex);
+                }
             }
         });
         playerBox.setOnClickListener(new View.OnClickListener() {
@@ -259,39 +264,35 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
     public void onBuffer(int percent) {
     }
 
-    /** 按视频比例在播放框内居中适配 */
+    /** Surface 保持 match_parent，避免改尺寸导致有声无画 */
     private void layoutSurface(int vw, int vh) {
-        if (vw <= 0 || vh <= 0) return;
-        int aw = playerBox.getWidth();
-        int ah = playerBox.getHeight();
-        if (aw <= 0 || ah <= 0) {
-            aw = getResources().getDisplayMetrics().widthPixels;
-            ah = aw * 9 / 16;
-        }
-        float video = vw * 1f / vh;
-        float area = aw * 1f / ah;
-        int w, h;
-        if (video > area) {
-            w = aw;
-            h = (int) (aw / video);
-        } else {
-            h = ah;
-            w = (int) (ah * video);
-        }
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-        lp.gravity = android.view.Gravity.CENTER;
-        surface.setLayoutParams(lp);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (player != null) player.pause();
+        // 交接全屏时不 pause
+        if (player != null && XPlayer.pendingHandoff != player) player.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 从横屏返回：重新绑 surface 继续播
+        if (player != null && surface != null) {
+            try {
+                if (XPlayer.pendingHandoff == player) XPlayer.pendingHandoff = null;
+                player.attachSurface(surface);
+                player.start();
+                refreshIcon();
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (player != null) player.release();
+        if (player != null && XPlayer.pendingHandoff != player) player.release();
     }
 }

@@ -112,7 +112,15 @@ public class PageLive extends Page implements XPlayer.Listener {
         playerBox.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openFull();
+                // 点播放器：显示/切换简易控件（状态行 + 全屏）
+                if (U.empty(playingUrl)) {
+                    U.toast("请先选择频道");
+                    return;
+                }
+                if (player != null) {
+                    player.toggle();
+                    status.setText(player.isPlaying() ? "播放中 · 点全屏横屏观看" : "已暂停 · 再点继续");
+                }
             }
         });
         groups.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
@@ -134,7 +142,21 @@ public class PageLive extends Page implements XPlayer.Listener {
 
     @Override
     public void onHide() {
-        if (player != null) player.pause();
+        if (player != null && XPlayer.pendingHandoff != player) player.pause();
+    }
+
+    @Override
+    public void onShow() {
+        super.onShow();
+        // 从横屏返回：重新绑定 surface 继续播
+        if (player != null && surface != null) {
+            try {
+                if (XPlayer.pendingHandoff == player) XPlayer.pendingHandoff = null;
+                player.attachSurface(surface);
+                if (!U.empty(playingUrl)) player.start();
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     private void openFull() {
@@ -153,7 +175,12 @@ public class PageLive extends Page implements XPlayer.Listener {
         List<Vod.Episode> eps = new ArrayList<Vod.Episode>();
         eps.add(new Vod.Episode("直播", c.url));
         vod.episodes.add(eps);
-        PlayActivity.go(act, vod, 0, 0, false);
+        if (player != null && player.isPrepared()) {
+            player.beginHandoff();
+            PlayActivity.goLiveContinue(act, vod);
+        } else {
+            PlayActivity.goLand(act, vod, 0, 0);
+        }
     }
 
     private void load(boolean force) {
@@ -258,22 +285,7 @@ public class PageLive extends Page implements XPlayer.Listener {
     }
 
     private void layoutSurface(int vw, int vh) {
-        if (vw <= 0 || vh <= 0 || surface == null || playerBox == null) return;
-        int aw = playerBox.getWidth();
-        int ah = playerBox.getHeight();
-        if (aw <= 0 || ah <= 0) return;
-        float vr = vw * 1f / vh, ar = aw * 1f / ah;
-        int w, h;
-        if (vr > ar) {
-            w = aw;
-            h = (int) (aw / vr);
-        } else {
-            h = ah;
-            w = (int) (ah * vr);
-        }
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
-        lp.gravity = android.view.Gravity.CENTER;
-        surface.setLayoutParams(lp);
+        // 不改 SurfaceView 尺寸，避免有声无画
     }
 
     private class GroupAdapter extends BaseAdapter {

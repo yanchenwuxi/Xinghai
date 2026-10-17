@@ -110,6 +110,30 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
         c.startActivity(i);
     }
 
+    /** 携带已在播的播放器，不重新加载 */
+    public static void goLandContinue(Context c, Vod v, int flag, int ep) {
+        handoff = v;
+        handoffFlag = flag;
+        handoffEp = ep;
+        Intent i = new Intent(c, PlayActivity.class);
+        i.putExtra("parse", false);
+        i.putExtra("land", true);
+        i.putExtra("continue", true);
+        c.startActivity(i);
+    }
+
+    public static void goLiveContinue(Context c, Vod v) {
+        handoff = v;
+        handoffFlag = 0;
+        handoffEp = 0;
+        Intent i = new Intent(c, PlayActivity.class);
+        i.putExtra("parse", false);
+        i.putExtra("land", true);
+        i.putExtra("continue", true);
+        i.putExtra("from_live", true);
+        c.startActivity(i);
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -119,6 +143,10 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         }
         setContentView(R.layout.activity_play);
+        if (getIntent() != null && getIntent().getBooleanExtra("land", false)) {
+            View ps = findViewById(R.id.play_scroll);
+            if (ps != null) ps.setVisibility(View.GONE);
+        }
         vod = handoff;
         handoff = null; // 尽早释放静态引用，降低竞态与泄漏
         if (vod == null) {
@@ -156,12 +184,27 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
         speed = Store.speed();
 
         layoutVideoArea();
-        player = new XPlayer(video);
-        player.setListener(this);
+        boolean cont = getIntent() != null && getIntent().getBooleanExtra("continue", false);
+        if (cont && XPlayer.pendingHandoff != null) {
+            player = XPlayer.pendingHandoff;
+            XPlayer.pendingHandoff = null;
+            player.setListener(this);
+            player.attachSurface(video);
+        } else {
+            player = new XPlayer(video);
+            player.setListener(this);
+        }
         bindControls();
         buildContent();
         startProgressLoop();
-        playEpisode(flagIndex, epIndex, true);
+        if (!(getIntent() != null && getIntent().getBooleanExtra("continue", false))) {
+            playEpisode(flagIndex, epIndex, true);
+        } else {
+            // 继续播：刷新控制栏
+            if (ctlName != null && vod != null) ctlName.setText(vod.name);
+            refreshPlayIcon();
+            layoutVideoArea();
+        }
     }
 
     // ------------------------------------------------------------ 画面区域
@@ -496,16 +539,21 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
                         return true;
                     case MotionEvent.ACTION_MOVE:
                         float dx = e.getX() - downX, dy = e.getY() - downY;
-                        if (!moved && (Math.abs(dx) > U.dp(8) || Math.abs(dy) > U.dp(8))) moved = true;
+                        if (!moved && (Math.abs(dx) > U.dp(12) || Math.abs(dy) > U.dp(12))) moved = true;
                         if (!moved || locked) return true;
-                        if (Math.abs(dx) > Math.abs(dy)) {
+                        if (Math.abs(dx) > Math.abs(dy) * 1.2f) {
                             int dur = player.duration();
-                            float ratio = dx / v.getWidth();
-                            int target = (int) (downPos + dur * ratio);
+                            if (dur <= 0) {
+                                hint("直播中，无法快进");
+                                return true;
+                            }
+                            // 以按下位置为基准，全宽约对应片长 1/2（最少 2 分钟）
+                            int range = Math.max(dur / 2, Math.min(dur, 120000));
+                            int target = (int) (downPos + dx / Math.max(1, v.getWidth()) * range);
                             target = Math.max(0, Math.min(dur, target));
-                            hint("快进/快退  " + U.time(target) + " / " + U.time(dur));
-                            downPos = target;
-                            downX = e.getX();
+                            hint((target >= downPos ? "快进 " : "快退 ") + U.time(target) + " / " + U.time(dur));
+                            // 不改 downPos/downX，松手一次 seek
+                            videoArea.setTag(Integer.valueOf(target));
                         } else {
                             float ratio = -dy / v.getHeight();
                             if (e.getX() < v.getWidth() / 2f) {
@@ -544,7 +592,11 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
                             }
                         } else if (!locked) {
                             int dur = player.duration();
-                            if (dur > 0) player.seekTo(Math.max(0, Math.min(dur, downPos)));
+                            Object tag = videoArea.getTag();
+                            int target = downPos;
+                            if (tag instanceof Integer) target = ((Integer) tag).intValue();
+                            if (dur > 0) player.seekTo(Math.max(0, Math.min(dur, target)));
+                            videoArea.setTag(null);
                         }
                         return true;
                     default:
@@ -1102,20 +1154,24 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         try {
             saveHistory(false);
             ui.removeCallbacksAndMessages(null);
-            if (player != null) player.release();
+            // 已交接出去的播放器不 release
+            if (player != null && XPlayer.pendingHandoff != player) player.release();
         } catch (Throwable ignored) {
         }
         if (handoff == vod) handoff = null;
+        super.onDestroy();
     }
 
     @Override
     public void onBackPressed() {
-        if (isLandscape()) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        // 横屏全屏：直接返回详情/直播，不进竖屏播放页
+        boolean landOnly = getIntent() != null && getIntent().getBooleanExtra("land", false);
+        if (landOnly || isLandscape()) {
+            if (player != null) player.beginHandoff();
+            finish();
             return;
         }
         super.onBackPressed();

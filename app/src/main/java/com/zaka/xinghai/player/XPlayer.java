@@ -5,13 +5,8 @@ import android.os.Build;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * 自研播放内核封装：MediaPlayer + SurfaceView。
- * 为什么不用现成的 VideoView：倍速、画面比例、音轨信息、错误换线这些都得自己控，
- * 包一层之后这些都能拿到，也不受第三方播放器 SDK 牵制。
+ * MediaPlayer + SurfaceView。支持跨页面交接（详情/直播 → 横屏全屏不重载）。
  */
 public class XPlayer implements SurfaceHolder.Callback,
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
@@ -30,7 +25,10 @@ public class XPlayer implements SurfaceHolder.Callback,
         void onBuffer(int percent);
     }
 
-    private final SurfaceView surface;
+    /** 页面间临时交接，接收方在 onCreate 取走并置空 */
+    public static XPlayer pendingHandoff;
+
+    private SurfaceView surface;
     private MediaPlayer mp;
     private Listener listener;
     private String url = "";
@@ -38,10 +36,31 @@ public class XPlayer implements SurfaceHolder.Callback,
     private float speed = 1f;
     private int videoW = 0, videoH = 0;
     private boolean wantPlaying = false;
+    /** 交接中：surfaceDestroyed 不 pause、不清 display 逻辑由 take 接管 */
+    private boolean handingOff = false;
 
     public XPlayer(SurfaceView sv) {
+        bindSurface(sv);
+    }
+
+    private void bindSurface(SurfaceView sv) {
+        if (surface != null) {
+            try {
+                surface.getHolder().removeCallback(this);
+            } catch (Throwable ignored) {
+            }
+        }
         surface = sv;
-        surface.getHolder().addCallback(this);
+        if (surface != null) {
+            surface.getHolder().addCallback(this);
+            if (mp != null && surface.getHolder().getSurface() != null
+                    && surface.getHolder().getSurface().isValid()) {
+                try {
+                    mp.setDisplay(surface.getHolder());
+                } catch (Throwable ignored) {
+                }
+            }
+        }
     }
 
     public void setListener(Listener l) {
@@ -111,47 +130,6 @@ public class XPlayer implements SurfaceHolder.Callback,
         }
     }
 
-    /** 倍速（API 23+ 才有，低版本如实返回 false） */
-    public boolean setSpeed(float s) {
-        speed = s;
-        if (mp == null || !prepared) return false;
-        try {
-            if (Build.VERSION.SDK_INT >= 23) {
-                android.media.PlaybackParams p = mp.getPlaybackParams();
-                p.setSpeed(s);
-                mp.setPlaybackParams(p);
-                return true;
-            }
-        } catch (Throwable ignored) {
-        }
-        return false;
-    }
-
-    public float speed() {
-        return speed;
-    }
-
-    /** 音轨列表（内核给不出来就是空列表，不编造） */
-    public List<String> tracks() {
-        List<String> out = new ArrayList<String>();
-        try {
-            if (mp == null) return out;
-            MediaPlayer.TrackInfo[] infos = mp.getTrackInfo();
-            if (infos == null) return out;
-            int i = 0;
-            for (MediaPlayer.TrackInfo t : infos) {
-                if (t.getTrackType() == MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_AUDIO) {
-                    i++;
-                    String lang = t.getLanguage();
-                    if (lang == null || lang.length() == 0 || "und".equals(lang)) lang = "默认";
-                    out.add("音轨 " + i + "（" + lang + "）");
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        return out;
-    }
-
     public int videoWidth() {
         return videoW;
     }
@@ -160,38 +138,101 @@ public class XPlayer implements SurfaceHolder.Callback,
         return videoH;
     }
 
-    /** 开始播放一个地址 */
+    public void setSpeed(float s) {
+        speed = s;
+        try {
+            if (mp != null && prepared && Build.VERSION.SDK_INT >= 23) {
+                android.media.PlaybackParams p = mp.getPlaybackParams();
+                p.setSpeed(speed);
+                mp.setPlaybackParams(p);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     public void play(final String u) {
         url = u == null ? "" : u;
         wantPlaying = true;
+        prepared = false;
+        videoW = 0;
+        videoH = 0;
         try {
-            releasePlayer();
+            releasePlayer(false);
             mp = new MediaPlayer();
-            mp.setDataSource(url);
-            if (surface.getHolder().getSurface() != null
-                    && surface.getHolder().getSurface().isValid()) {
-                mp.setDisplay(surface.getHolder());
-            }
             mp.setOnPreparedListener(this);
             mp.setOnErrorListener(this);
             mp.setOnCompletionListener(this);
             mp.setOnInfoListener(this);
             mp.setOnBufferingUpdateListener(this);
-            mp.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC);
+            if (surface != null && surface.getHolder().getSurface() != null
+                    && surface.getHolder().getSurface().isValid()) {
+                mp.setDisplay(surface.getHolder());
+            }
+            mp.setDataSource(url);
             mp.prepareAsync();
         } catch (Throwable t) {
-            if (listener != null) listener.onError(-1, 0);
+            if (listener != null) listener.onError(0, 0);
+        }
+    }
+
+    /**
+     * 发起交接：解绑当前 Surface，保持 MediaPlayer 继续播（有声无画一瞬间可接受），
+     * 接收页 attachSurface 后恢复画面。
+     */
+    public void beginHandoff() {
+        handingOff = true;
+        wantPlaying = true;
+        try {
+            if (mp != null) mp.setDisplay(null);
+        } catch (Throwable ignored) {
+        }
+        if (surface != null) {
+            try {
+                surface.getHolder().removeCallback(this);
+            } catch (Throwable ignored) {
+            }
+        }
+        surface = null;
+        pendingHandoff = this;
+    }
+
+    /** 全屏页接管播放器并绑到新 SurfaceView */
+    public void attachSurface(SurfaceView sv) {
+        handingOff = false;
+        bindSurface(sv);
+        wantPlaying = true;
+        try {
+            if (mp != null && surface != null
+                    && surface.getHolder().getSurface() != null
+                    && surface.getHolder().getSurface().isValid()) {
+                mp.setDisplay(surface.getHolder());
+                if (prepared) start();
+            }
+        } catch (Throwable ignored) {
         }
     }
 
     public void release() {
-        releasePlayer();
+        handingOff = false;
+        if (pendingHandoff == this) pendingHandoff = null;
+        releasePlayer(true);
+        if (surface != null) {
+            try {
+                surface.getHolder().removeCallback(this);
+            } catch (Throwable ignored) {
+            }
+            surface = null;
+        }
     }
 
-    private void releasePlayer() {
+    private void releasePlayer(boolean full) {
         prepared = false;
         try {
             if (mp != null) {
+                try {
+                    mp.setDisplay(null);
+                } catch (Throwable ignored) {
+                }
                 mp.reset();
                 mp.release();
             }
@@ -200,7 +241,6 @@ public class XPlayer implements SurfaceHolder.Callback,
         mp = null;
     }
 
-    // ------------------------------------------------------------ 回调
     @Override
     public void onPrepared(MediaPlayer m) {
         prepared = true;
@@ -245,8 +285,6 @@ public class XPlayer implements SurfaceHolder.Callback,
         if (listener != null) listener.onBuffer(percent);
     }
 
-    // SurfaceView 生命周期：切后台回来接着播，不重开播放器
-    // 关键：surface 销毁后必须重新 setDisplay，否则常见黑屏有声
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         if (mp == null) return;
@@ -259,14 +297,22 @@ public class XPlayer implements SurfaceHolder.Callback,
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        // 尺寸变化时重新 setDisplay，避免部分机型有声无画
+        if (mp != null && w > 0 && h > 0) {
+            try {
+                mp.setDisplay(holder);
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        if (handingOff) return;
         try {
             if (mp != null) mp.setDisplay(null);
         } catch (Throwable ignored) {
         }
-        pause();
+        // 不 pause：切页/旋转时 surface 会短暂销毁，停掉会导致体验差；仅解绑画面
     }
 }
