@@ -66,6 +66,7 @@ jobs:
           app/src/main/java/com/zaka/xinghai/net/AdFilter.java
           app/src/main/java/com/zaka/xinghai/net/Cms.java
           app/src/main/java/com/zaka/xinghai/net/Cfg.java
+          app/src/main/java/com/zaka/xinghai/net/Spider.java
           app/src/main/java/com/zaka/xinghai/subtitle/Cue.java
           app/src/main/java/com/zaka/xinghai/subtitle/SubParse.java
           test/JvmCheck.java

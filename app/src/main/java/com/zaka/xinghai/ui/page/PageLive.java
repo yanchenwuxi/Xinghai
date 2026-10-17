@@ -77,7 +77,7 @@ public class PageLive extends Page implements XPlayer.Listener {
     }
 
     @Override
-    protected void onHide() {
+    public void onHide() {
         if (player != null) player.pause();
     }
 
