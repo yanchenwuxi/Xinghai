@@ -6,6 +6,7 @@ import com.zaka.xinghai.model.Site;
 import com.zaka.xinghai.model.Vod;
 import com.zaka.xinghai.util.U;
 
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -32,6 +33,9 @@ public final class Cms {
 
     // ------------------------------------------------------------ 分类
     public static List<Cate> types(Site site) throws Exception {
+        if (site != null && site.isScript() && !Spider.canUseAsCms(site)) {
+            throw new Exception(Spider.unsupportedHint(site));
+        }
         List<Cate> cached = cateCache.get(site.key);
         long now = System.currentTimeMillis();
         if (cached != null && cached.size() > 0 && cacheTime.containsKey(site.key)

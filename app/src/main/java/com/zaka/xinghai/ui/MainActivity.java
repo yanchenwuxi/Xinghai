@@ -1,5 +1,7 @@
 package com.zaka.xinghai.ui;
 
+import com.zaka.xinghai.ui.dialog.ConfigDialog;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -152,6 +154,14 @@ public class MainActivity extends Activity {
             return Store.currentSite() == null ? "未选择接口" : Store.currentSite().name;
         } catch (Throwable t) {
             return "";
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ConfigDialog.REQ_FILE && resultCode == RESULT_OK && data != null) {
+            ConfigDialog.importUri(this, data.getData(), null);
         }
     }
 }

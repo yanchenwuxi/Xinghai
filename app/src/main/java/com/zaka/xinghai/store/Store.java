@@ -390,4 +390,13 @@ public final class Store {
             }
         });
     }
+
+    public static String cfgUrl() {
+        return p().getString("cfg_url", "");
+    }
+
+    public static void setCfgUrl(String v) {
+        p().edit().putString("cfg_url", v == null ? "" : v.trim()).apply();
+    }
+
 }

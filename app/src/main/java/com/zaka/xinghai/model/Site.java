@@ -33,6 +33,31 @@ public class Site {
         this.key = U.md5(api);
     }
 
+    /** TVBox: 0/1=cms 3=csp/jar 跳过；api 以 .js/.py 结尾视为脚本站 */
+    public boolean isScript() {
+        String a = api == null ? "" : api.toLowerCase();
+        String tp = type == null ? "" : type.toLowerCase();
+        return a.endsWith(".js") || a.endsWith(".py") || "js".equals(tp) || "py".equals(tp)
+                || "3".equals(tp) || tp.contains("csp");
+    }
+
+    public boolean isJs() {
+        String a = api == null ? "" : api.toLowerCase();
+        return a.endsWith(".js") || "js".equalsIgnoreCase(type);
+    }
+
+    public boolean isPy() {
+        String a = api == null ? "" : api.toLowerCase();
+        return a.endsWith(".py") || "py".equalsIgnoreCase(type);
+    }
+
+    public String typeLabel() {
+        if (isJs()) return "JS";
+        if (isPy()) return "PY";
+        if (isScript()) return "脚本";
+        return "CMS";
+    }
+
     public String host() {
         try {
             String a = api;

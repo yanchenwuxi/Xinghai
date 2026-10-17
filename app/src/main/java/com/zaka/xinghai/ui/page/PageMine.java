@@ -23,6 +23,7 @@ import com.zaka.xinghai.subtitle.SubStore;
 import com.zaka.xinghai.ui.MainActivity;
 import com.zaka.xinghai.ui.Page;
 import com.zaka.xinghai.ui.SiteActivity;
+import com.zaka.xinghai.ui.dialog.ConfigDialog;
 import com.zaka.xinghai.ui.dialog.InputDialog;
 import com.zaka.xinghai.ui.dialog.IntroDialog;
 import com.zaka.xinghai.ui.dialog.ListSheet;
@@ -32,7 +33,7 @@ import com.zaka.xinghai.util.U;
 /** 我的：头部信息 + 4 列功能网格 + 设置列表（跟参照的「我的」页同构）。 */
 public class PageMine extends Page {
 
-    private static final String[] GRID_NAMES = {"播放历史", "我的收藏", "接口管理", "播放设置",
+    private static final String[] GRID_NAMES = {"播放历史", "我的收藏", "仓库管理", "播放设置",
             "直播源", "字幕设置", "清除缓存", "关于"};
     private static final int[] GRID_ICONS = {
             R.drawable.ic_history2, R.drawable.ic_star, R.drawable.ic_site, R.drawable.ic_player,
@@ -78,7 +79,17 @@ public class PageMine extends Page {
         });
 
         LinearLayout list = (LinearLayout) v.findViewById(R.id.mine_list);
-        addRow(list, "接口管理", R.drawable.ic_site, new Runnable() {
+        addRow(list, "配置地址", R.drawable.ic_edit, new Runnable() {
+            @Override
+            public void run() {
+                ConfigDialog.show(act, new ConfigDialog.OnDone() {
+                    @Override
+                    public void onDone() {
+                    }
+                });
+            }
+        });
+        addRow(list, "仓库管理", R.drawable.ic_site, new Runnable() {
             @Override
             public void run() {
                 act.startActivity(new android.content.Intent(act, SiteActivity.class));

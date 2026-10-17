@@ -3,16 +3,51 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/main_bg"
-    android:orientation="vertical"
-    android:paddingTop="28dip">
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/live_player_box"
+        android:layout_width="match_parent"
+        android:layout_height="200dip"
+        android:background="@color/black">
+
+        <SurfaceView
+            android:id="@+id/live_surface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/live_now"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#66000000"
+            android:ellipsize="end"
+            android:paddingLeft="12dip"
+            android:paddingTop="8dip"
+            android:paddingRight="12dip"
+            android:paddingBottom="8dip"
+            android:singleLine="true"
+            android:text="选择下方频道开始播放"
+            android:textColor="@color/white"
+            android:textSize="13sp" />
+
+        <ProgressBar
+            android:id="@+id/live_spin"
+            android:layout_width="36dip"
+            android:layout_height="36dip"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/orange"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="44dip"
+        android:layout_height="40dip"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingLeft="14dip"
-        android:paddingRight="12dip">
+        android:paddingLeft="12dip"
+        android:paddingRight="8dip">
 
         <TextView
             android:layout_width="0dip"
@@ -20,21 +55,16 @@
             android:layout_weight="1"
             android:text="电视直播"
             android:textColor="@color/white"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/live_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="10dip"
-            android:background="@drawable/bg_chip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
-            android:paddingTop="3dip"
-            android:paddingBottom="3dip"
+            android:layout_marginRight="8dip"
             android:textColor="@color/white_44"
-            android:textSize="11sp" />
+            android:textSize="12sp" />
 
         <ImageView
             android:id="@+id/live_refresh"
@@ -48,23 +78,15 @@
         android:layout_width="match_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:orientation="horizontal"
-        android:paddingBottom="4dip">
+        android:orientation="horizontal">
 
         <ListView
             android:id="@+id/group_list"
-            android:layout_width="100dip"
+            android:layout_width="96dip"
             android:layout_height="match_parent"
             android:background="#121212"
-            android:divider="@drawable/bg_divider"
-            android:dividerHeight="1px"
-            android:paddingTop="4dip"
+            android:divider="@null"
             android:scrollbars="none" />
-
-        <View
-            android:layout_width="1px"
-            android:layout_height="match_parent"
-            android:background="#22ffffff" />
 
         <FrameLayout
             android:layout_width="0dip"
@@ -75,13 +97,9 @@
                 android:id="@+id/channel_grid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="false"
                 android:horizontalSpacing="8dip"
                 android:numColumns="2"
-                android:paddingLeft="10dip"
-                android:paddingTop="8dip"
-                android:paddingRight="10dip"
-                android:paddingBottom="12dip"
+                android:padding="8dip"
                 android:stretchMode="columnWidth"
                 android:verticalSpacing="8dip" />
 
@@ -92,8 +110,8 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:lineSpacingExtra="6dip"
-                android:padding="24dip"
-                android:text="还没有直播源\n点右上角刷新，或到「我的 → 直播源」粘贴 m3u 地址"
+                android:padding="20dip"
+                android:text="还没有直播源"
                 android:textColor="@color/white_44"
                 android:textSize="13sp" />
         </FrameLayout>

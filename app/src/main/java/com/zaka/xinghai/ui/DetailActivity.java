@@ -105,7 +105,9 @@ public class DetailActivity extends Activity {
         epsView = new VodParts.Eps(this, new VodParts.OnEpisode() {
             @Override
             public void onEpisode(int flagIndex, int epIndex) {
+                // 进入播放页并关闭详情，避免「播放浮在详情上」叠两层
                 PlayActivity.go(DetailActivity.this, vod, flagIndex, epIndex, false);
+                finish();
             }
         });
         if (vod.flags.size() > 0) {
