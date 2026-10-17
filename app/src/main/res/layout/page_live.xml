@@ -4,15 +4,15 @@
     android:layout_height="match_parent"
     android:background="@color/main_bg"
     android:orientation="vertical"
-    android:paddingTop="30dip">
+    android:paddingTop="28dip">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="40dip"
+        android:layout_height="44dip"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingLeft="14dip"
-        android:paddingRight="14dip">
+        android:paddingRight="12dip">
 
         <TextView
             android:layout_width="0dip"
@@ -20,22 +20,27 @@
             android:layout_weight="1"
             android:text="电视直播"
             android:textColor="@color/white"
-            android:textSize="17sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/live_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="12dip"
+            android:layout_marginRight="10dip"
+            android:background="@drawable/bg_chip"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
+            android:paddingTop="3dip"
+            android:paddingBottom="3dip"
             android:textColor="@color/white_44"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
         <ImageView
             android:id="@+id/live_refresh"
-            android:layout_width="20dip"
-            android:layout_height="20dip"
-            android:alpha="0.85"
+            android:layout_width="34dip"
+            android:layout_height="34dip"
+            android:padding="7dip"
             android:src="@drawable/ic_refresh" />
     </LinearLayout>
 
@@ -43,15 +48,23 @@
         android:layout_width="match_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingBottom="4dip">
 
         <ListView
             android:id="@+id/group_list"
-            android:layout_width="92dip"
+            android:layout_width="100dip"
             android:layout_height="match_parent"
-            android:background="@color/white_94"
-            android:divider="@null"
+            android:background="#121212"
+            android:divider="@drawable/bg_divider"
+            android:dividerHeight="1px"
+            android:paddingTop="4dip"
             android:scrollbars="none" />
+
+        <View
+            android:layout_width="1px"
+            android:layout_height="match_parent"
+            android:background="#22ffffff" />
 
         <FrameLayout
             android:layout_width="0dip"
@@ -62,20 +75,24 @@
                 android:id="@+id/channel_grid"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:horizontalSpacing="6dip"
-                android:numColumns="3"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:paddingTop="4dip"
+                android:clipToPadding="false"
+                android:horizontalSpacing="8dip"
+                android:numColumns="2"
+                android:paddingLeft="10dip"
+                android:paddingTop="8dip"
+                android:paddingRight="10dip"
+                android:paddingBottom="12dip"
+                android:stretchMode="columnWidth"
                 android:verticalSpacing="8dip" />
 
             <TextView
                 android:id="@+id/live_empty"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:lineSpacingExtra="6dip"
+                android:padding="24dip"
                 android:text="还没有直播源\n点右上角刷新，或到「我的 → 直播源」粘贴 m3u 地址"
                 android:textColor="@color/white_44"
                 android:textSize="13sp" />

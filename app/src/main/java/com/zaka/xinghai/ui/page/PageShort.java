@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.GridView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -28,7 +28,7 @@ import java.util.Random;
 /** 短剧：竖向大卡片流，点开进详情（数据从当前接口按「短剧」取）。 */
 public class PageShort extends Page {
 
-    private ListView list;
+    private GridView list;
     private TextView empty;
     private ProgressBar loading;
     private final List<Vod> data = new ArrayList<Vod>();
@@ -41,7 +41,7 @@ public class PageShort extends Page {
     @Override
     protected View onCreate() {
         View v = LayoutInflater.from(act).inflate(R.layout.page_short, null);
-        list = (ListView) v.findViewById(R.id.short_list);
+        list = (GridView) v.findViewById(R.id.short_list);
         empty = (TextView) v.findViewById(R.id.short_empty);
         loading = (ProgressBar) v.findViewById(R.id.short_loading);
         v.findViewById(R.id.short_refresh).setOnClickListener(new View.OnClickListener() {
@@ -134,82 +134,30 @@ public class PageShort extends Page {
         }
 
         @Override
-        public View getView(int position, View v, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            View v = convertView;
             if (v == null) {
-                android.widget.FrameLayout box = new android.widget.FrameLayout(act);
-                box.setLayoutParams(new android.widget.AbsListView.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, U.dp(190)));
-                box.setBackgroundResource(R.drawable.bg_card);
-
-                ImageView bg = new ImageView(act);
-                bg.setId(1001);
-                bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                bg.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                box.addView(bg);
-
-                View scrim = new View(act);
-                scrim.setBackgroundResource(R.drawable.bg_scrim_bottom);
-                scrim.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                box.addView(scrim);
-
-                android.widget.LinearLayout info = new android.widget.LinearLayout(act);
-                info.setOrientation(android.widget.LinearLayout.VERTICAL);
-                info.setGravity(android.view.Gravity.BOTTOM);
-                info.setPadding(U.dp(12), U.dp(12), U.dp(12), U.dp(12));
-                android.widget.FrameLayout.LayoutParams ilp =
-                        new android.widget.FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                box.addView(info, ilp);
-
-                TextView title = new TextView(act);
-                title.setId(1002);
-                title.setTextSize(16);
-                title.setTextColor(Color.WHITE);
-                title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-                title.setMaxLines(2);
-                info.addView(title);
-
-                TextView note = new TextView(act);
-                note.setId(1003);
-                note.setTextSize(11);
-                note.setTextColor(0xccffffff);
-                note.setPadding(0, U.dp(6), 0, 0);
-                note.setMaxLines(2);
-                info.addView(note);
-
-                TextView play = new TextView(act);
-                play.setId(1004);
-                play.setText("立即观看");
-                play.setTextSize(12);
-                play.setTextColor(0xff001a37);
-                play.setGravity(android.view.Gravity.CENTER);
-                play.setBackgroundResource(R.drawable.bg_btn_accent);
-                android.widget.LinearLayout.LayoutParams plp =
-                        new android.widget.LinearLayout.LayoutParams(U.dp(88), U.dp(30));
-                plp.topMargin = U.dp(10);
-                play.setLayoutParams(plp);
-                info.addView(play);
-
-                v = box;
+                v = LayoutInflater.from(act).inflate(R.layout.item_vod, parent, false);
             }
             final Vod vod = data.get(position);
-            Img.load((ImageView) v.findViewById(1001), vod.pic);
-            ((TextView) v.findViewById(1002)).setText(vod.name);
-            StringBuilder sb = new StringBuilder();
-            if (!U.empty(vod.note)) sb.append(vod.note);
-            if (!U.empty(vod.type)) sb.append(sb.length() > 0 ? "  ·  " : "").append(vod.type);
-            if (!U.empty(vod.year)) sb.append(sb.length() > 0 ? "  ·  " : "").append(vod.year);
-            ((TextView) v.findViewById(1003)).setText(sb.toString());
-            View.OnClickListener go = new View.OnClickListener() {
+            TextView title = (TextView) v.findViewById(R.id.title);
+            TextView note = (TextView) v.findViewById(R.id.note);
+            ImageView pic = (ImageView) v.findViewById(R.id.pic);
+            if (title != null) title.setText(vod.name);
+            if (note != null) {
+                if (U.empty(vod.note)) note.setVisibility(View.GONE);
+                else { note.setVisibility(View.VISIBLE); note.setText(vod.note); }
+            }
+            if (pic != null) {
+                if (!U.empty(vod.pic)) Img.load(pic, vod.pic);
+                else pic.setImageDrawable(null);
+            }
+            v.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     DetailActivity.go(act, vod);
                 }
-            };
-            v.findViewById(1004).setOnClickListener(go);
-            v.setOnClickListener(go);
+            });
             return v;
         }
     }

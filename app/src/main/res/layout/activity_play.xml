@@ -12,7 +12,7 @@
         <FrameLayout
             android:id="@+id/video_area"
             android:layout_width="match_parent"
-            android:layout_height="0dip"
+            android:layout_height="220dip"
             android:background="@color/black">
 
             <SurfaceView

@@ -130,20 +130,21 @@ public class PageLive extends Page {
         }
 
         @Override
-        public View getView(int position, View v, ViewGroup parent) {
+        public View getView(int position, View convertView, ViewGroup parent) {
             TextView tv;
-            if (v instanceof TextView) tv = (TextView) v;
-            else {
+            if (convertView instanceof TextView) {
+                tv = (TextView) convertView;
+            } else {
                 tv = new TextView(act);
                 tv.setTextSize(13);
-                tv.setPadding(U.dp(10), U.dp(14), U.dp(10), U.dp(14));
-                tv.setSingleLine(true);
-                tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                tv.setPadding(U.dp(12), U.dp(14), U.dp(8), U.dp(14));
+                tv.setMaxLines(2);
             }
-            tv.setText(data.get(position).name);
+            M3u.Group g = data.get(position);
+            tv.setText(g.name + "\n" + g.channels.size() + " 个");
             boolean on = position == groupIndex;
-            tv.setTextColor(on ? 0xffffb40a : 0xccffffff);
-            tv.setBackgroundColor(on ? 0x14000000 : 0x00000000);
+            tv.setTextColor(on ? 0xffffffff : 0x99ffffff);
+            tv.setBackgroundColor(on ? 0x22ff6a00 : 0x00000000);
             return tv;
         }
     }
@@ -171,32 +172,36 @@ public class PageLive extends Page {
         }
 
         @Override
-        public View getView(final int position, View v, ViewGroup parent) {
-            if (v == null) {
-                android.widget.LinearLayout box = new android.widget.LinearLayout(act);
-                box.setOrientation(android.widget.LinearLayout.VERTICAL);
-                box.setGravity(android.view.Gravity.CENTER);
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            android.widget.LinearLayout box;
+            if (convertView instanceof android.widget.LinearLayout) {
+                box = (android.widget.LinearLayout) convertView;
+            } else {
+                box = new android.widget.LinearLayout(act);
+                box.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                box.setGravity(android.view.Gravity.CENTER_VERTICAL);
                 box.setBackgroundResource(R.drawable.bg_card_sel);
-                box.setPadding(U.dp(4), U.dp(12), U.dp(4), U.dp(12));
+                box.setPadding(U.dp(12), U.dp(14), U.dp(12), U.dp(14));
 
                 ImageView iv = new ImageView(act);
-                iv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(U.dp(26), U.dp(26)));
+                iv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(U.dp(22), U.dp(22)));
                 iv.setImageResource(R.drawable.ic_live);
-                iv.setAlpha(0.9f);
+                iv.setAlpha(0.85f);
                 box.addView(iv);
 
                 TextView tv = new TextView(act);
-                tv.setTextSize(12);
+                android.widget.LinearLayout.LayoutParams tp =
+                        new android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+                tp.leftMargin = U.dp(10);
+                tv.setLayoutParams(tp);
+                tv.setTextSize(13);
                 tv.setTextColor(0xffffffff);
-                tv.setGravity(android.view.Gravity.CENTER);
                 tv.setMaxLines(2);
-                tv.setPadding(0, U.dp(6), 0, 0);
                 box.addView(tv);
-                v = box;
             }
             M3u.Channel c = list.get(position);
-            ((TextView) ((android.widget.LinearLayout) v).getChildAt(1)).setText(c.name);
-            v.setOnClickListener(new View.OnClickListener() {
+            ((TextView) box.getChildAt(1)).setText(c.name);
+            box.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     Vod vod = new Vod();
@@ -210,7 +215,7 @@ public class PageLive extends Page {
                     PlayActivity.go(act, vod, 0, 0, false);
                 }
             });
-            return v;
+            return box;
         }
     }
 }

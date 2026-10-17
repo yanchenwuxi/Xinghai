@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.GridView;
 import android.widget.TextView;
 
 import com.zaka.xinghai.R;
@@ -108,4 +109,66 @@ public class ListSheet {
         sheet.show();
         return sheet;
     }
+
+    /** 多列分类网格（全部分类面板） */
+    public static Sheet showGrid(Context c, String title, final List<String> names, int selected,
+                                 final int columns, final OnPick cb) {
+        final Sheet sheet = new Sheet(c, title);
+        if (names == null || names.size() == 0) {
+            TextView empty = U.text(c, "没有分类", 13, 0x8fffffff);
+            empty.setGravity(Gravity.CENTER);
+            sheet.add(empty);
+            sheet.show();
+            return sheet;
+        }
+        GridView grid = new GridView(c);
+        grid.setNumColumns(Math.max(2, columns));
+        grid.setHorizontalSpacing(U.dp(8));
+        grid.setVerticalSpacing(U.dp(8));
+        grid.setPadding(U.dp(4), U.dp(4), U.dp(4), U.dp(4));
+        grid.setAdapter(new android.widget.BaseAdapter() {
+            @Override
+            public int getCount() { return names.size(); }
+            @Override
+            public Object getItem(int position) { return names.get(position); }
+            @Override
+            public long getItemId(int position) { return position; }
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView tv;
+                if (convertView instanceof TextView) {
+                    tv = (TextView) convertView;
+                } else {
+                    tv = U.text(c, "", 13, 0xffffffff);
+                    tv.setGravity(Gravity.CENTER);
+                    tv.setPadding(U.dp(6), U.dp(12), U.dp(6), U.dp(12));
+                    tv.setBackgroundResource(R.drawable.bg_chip);
+                    tv.setSingleLine(true);
+                }
+                tv.setText(names.get(position));
+                boolean on = position == selected;
+                tv.setBackgroundResource(on ? R.drawable.bg_chip_sel : R.drawable.bg_chip);
+                tv.setTextColor(on ? 0xffffffff : 0xffcccccc);
+                return tv;
+            }
+        });
+        grid.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                sheet.dismiss();
+                if (cb != null) cb.onPick(position, names.get(position));
+            }
+        });
+        // 给网格一个合理高度
+        int rows = (names.size() + columns - 1) / columns;
+        int gh = Math.min(U.dp(52) * rows + U.dp(16), U.dp(420));
+        android.widget.LinearLayout.LayoutParams lp =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT, gh);
+        grid.setLayoutParams(lp);
+        sheet.add(grid);
+        sheet.show();
+        return sheet;
+    }
+
 }

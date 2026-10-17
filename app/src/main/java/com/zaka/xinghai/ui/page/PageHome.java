@@ -1,6 +1,8 @@
 package com.zaka.xinghai.ui.page;
 
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -128,6 +130,35 @@ public class PageHome extends Page {
 
         HorizontalScrollView hs = (HorizontalScrollView) v.findViewById(R.id.cate_scroll);
         LinearLayout bar = (LinearLayout) v.findViewById(R.id.cate_bar);
+
+        // 左右滑动切换分类
+        final GestureDetector gd = new GestureDetector(act, new GestureDetector.SimpleOnGestureListener() {
+            final int MIN_DX = 120;
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vx, float vy) {
+                if (e1 == null || e2 == null || cates.size() == 0) return false;
+                float dx = e2.getX() - e1.getX();
+                float dy = e2.getY() - e1.getY();
+                if (Math.abs(dx) < MIN_DX || Math.abs(dx) < Math.abs(dy) * 1.2f) return false;
+                if (dx < 0 && cateIndex < cates.size() - 1) {
+                    tabs.select(cateIndex + 1, true);
+                    return true;
+                }
+                if (dx > 0 && cateIndex > 0) {
+                    tabs.select(cateIndex - 1, true);
+                    return true;
+                }
+                return false;
+            }
+        });
+        grid.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                gd.onTouchEvent(event);
+                return false; // 不拦截，保留滚动与点击
+            }
+        });
+
         tabs = new Tabs(hs, bar);
         tabs.setOnSelect(new Tabs.OnSelect() {
             @Override
@@ -173,7 +204,7 @@ public class PageHome extends Page {
             U.toast("这个源没返回分类");
             return;
         }
-        ListSheet.show(act, "全部分类", names, cateIndex, new ListSheet.OnPick() {
+        ListSheet.showGrid(act, "全部分类", names, cateIndex, 3, new ListSheet.OnPick() {
             @Override
             public void onPick(int index, String value) {
                 tabs.select(index, true);

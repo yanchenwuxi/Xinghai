@@ -1,6 +1,9 @@
 package com.zaka.xinghai.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,7 +60,7 @@ public class SiteActivity extends Activity {
             }
         });
         ((TextView) findViewById(R.id.site_tip)).setText(
-                "支持任何苹果 CMS 格式的采集接口。点一行切换使用，点「测速」探测连通性与响应速度。");
+                "支持苹果 CMS 采集接口。可从网络、粘贴文本或本地文件导入 TVBox 配置。点一行切换，点测速探测连通。");
         reload();
     }
 
@@ -87,54 +90,145 @@ public class SiteActivity extends Activity {
         });
     }
 
+    private static final int REQ_LOCAL_CFG = 4101;
+
     private void importCfg() {
+        new AlertDialog.Builder(this)
+                .setTitle("导入接口")
+                .setItems(new String[]{"从网络地址导入", "粘贴本地配置文本", "选择本地文件"}, new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface dialog, int which) {
+                        if (which == 0) importFromUrl();
+                        else if (which == 1) importFromPaste();
+                        else importFromFile();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void importFromUrl() {
         InputDialog.show(this, "导入接口配置", "粘贴配置地址（json / xml）", "", false,
                 new InputDialog.OnOk() {
                     @Override
                     public void onOk(final String url) {
                         if (U.empty(url)) return;
-                        U.toast("正在导入…");
-                        App.run(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    String body = Http.get(url.trim(), Http.headers("User-Agent", Http.UA), 15000);
-                                    final List<Site> got = Cfg.load(body, url);
-                                    App.onUi(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (got.size() == 0) {
-                                                U.toast("这个配置里没解析出可用接口");
-                                                return;
-                                            }
-                                            List<Site> all = Store.sites();
-                                            int add = 0;
-                                            for (Site s : got) {
-                                                boolean dup = false;
-                                                for (Site e : all) if (e.api.equals(s.api)) dup = true;
-                                                if (!dup) {
-                                                    all.add(s);
-                                                    add++;
-                                                }
-                                            }
-                                            Store.saveSites(all);
-                                            reload();
-                                            U.toast("导入完成，新增 " + add + " 个接口");
-                                        }
-                                    });
-                                } catch (Throwable t) {
-                                    App.onUi(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            U.toast("配置没拉下来，检查地址");
-                                        }
-                                    });
-                                }
-                            }
-                        });
+                        fetchAndImport(url.trim(), url.trim());
                     }
                 });
     }
+
+    private void importFromPaste() {
+        InputDialog.show(this, "粘贴本地配置", "粘贴 TVBox / 采集 的 json 或 xml 全文", "", true,
+                new InputDialog.OnOk() {
+                    @Override
+                    public void onOk(final String body) {
+                        if (U.empty(body)) return;
+                        applyImport(body, "local-paste");
+                    }
+                });
+    }
+
+    private void importFromFile() {
+        try {
+            Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+            i.setType("*/*");
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(Intent.createChooser(i, "选择接口配置文件"), REQ_LOCAL_CFG);
+        } catch (Throwable t) {
+            U.toast("当前系统无法打开文件选择器，请改用粘贴导入");
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQ_LOCAL_CFG || resultCode != RESULT_OK || data == null) return;
+        final Uri uri = data.getData();
+        if (uri == null) return;
+        U.toast("正在读取文件…");
+        App.run(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    java.io.InputStream in = getContentResolver().openInputStream(uri);
+                    if (in == null) throw new Exception("无法打开文件");
+                    byte[] buf = U.readAll(in);
+                    in.close();
+                    final String body = Http.decodeText(buf);
+                    App.onUi(new Runnable() {
+                        @Override
+                        public void run() {
+                            applyImport(body, uri.toString());
+                        }
+                    });
+                } catch (final Throwable t) {
+                    App.onUi(new Runnable() {
+                        @Override
+                        public void run() {
+                            U.toast("读取失败：" + (t.getMessage() == null ? "未知错误" : t.getMessage()));
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void fetchAndImport(final String url, final String base) {
+        U.toast("正在导入…");
+        App.run(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String body = Http.get(url, Http.headers("User-Agent", Http.UA), 15000);
+                    final List<Site> got = Cfg.load(body, base);
+                    App.onUi(new Runnable() {
+                        @Override
+                        public void run() {
+                            mergeSites(got);
+                        }
+                    });
+                } catch (final Throwable t) {
+                    App.onUi(new Runnable() {
+                        @Override
+                        public void run() {
+                            U.toast("导入失败：" + (t.getMessage() == null ? "网络错误" : t.getMessage()));
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void applyImport(String body, String base) {
+        try {
+            List<Site> got = Cfg.load(body, base);
+            mergeSites(got);
+        } catch (Throwable t) {
+            U.toast("解析失败，请确认是 TVBox/采集 配置格式");
+        }
+    }
+
+    private void mergeSites(List<Site> got) {
+        if (got == null || got.size() == 0) {
+            U.toast("这个配置里没解析出可用接口");
+            return;
+        }
+        List<Site> all = Store.sites();
+        int add = 0;
+        for (Site s : got) {
+            boolean dup = false;
+            for (Site e : all) if (e.api.equals(s.api)) dup = true;
+            if (!dup) {
+                all.add(s);
+                add++;
+            }
+        }
+        Store.saveSites(all);
+        reload();
+        U.toast("导入完成，新增 " + add + " 个接口");
+    }
+
 
     private void test(final Site s) {
         U.toast("正在测速 " + s.name + "…");

@@ -49,16 +49,18 @@
         android:layout_height="0dip"
         android:layout_weight="1">
 
-        <ListView
+        <GridView
             android:id="@+id/short_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:divider="@null"
-            android:dividerHeight="10dip"
+            android:horizontalSpacing="8dip"
+            android:numColumns="3"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
             android:paddingTop="6dip"
             android:paddingBottom="10dip"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="10dip"
             android:scrollbars="none" />
 
         <TextView

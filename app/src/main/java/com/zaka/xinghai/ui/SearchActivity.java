@@ -39,7 +39,8 @@ public class SearchActivity extends Activity {
     private VodAdapter adapter;
     private LinearLayout home;
     private FlowLayout flow;
-    private TextView tip, clear;
+    private TextView tip;
+    private View clear;
     private ProgressBar loading;
     private View hotRow1, hotRow2;
 
@@ -67,7 +68,7 @@ public class SearchActivity extends Activity {
         home = (LinearLayout) findViewById(R.id.search_home);
         flow = (FlowLayout) findViewById(R.id.history_flow);
         tip = (TextView) findViewById(R.id.result_tip);
-        clear = (TextView) findViewById(R.id.search_clear);
+        clear = findViewById(R.id.search_clear);
         loading = (ProgressBar) findViewById(R.id.result_loading);
         hotRow1 = findViewById(R.id.hot_row1);
         hotRow2 = findViewById(R.id.hot_row2);

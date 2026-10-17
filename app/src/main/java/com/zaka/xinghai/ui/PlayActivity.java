@@ -152,31 +152,70 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
 
     // ------------------------------------------------------------ 画面区域
     private void layoutVideoArea() {
+        View scroll = findViewById(R.id.play_scroll);
+        boolean land = isLandscape();
+        // 横屏：全屏只留画面，隐藏下方详情区，避开状态栏
+        if (scroll != null) scroll.setVisibility(land ? View.GONE : View.VISIBLE);
+        applySystemUi(land);
+
         int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
         int h;
-        switch (scaleMode) {
-            case 1:
-                h = screenW * 9 / 16;
-                break;
-            case 2:
-                h = screenW * 3 / 4;
-                break;
-            case 3:
-                h = getResources().getDisplayMetrics().heightPixels;
-                break;
-            case 4:
-                h = player != null && player.videoHeight() > 0
-                        ? screenW * player.videoHeight() / Math.max(1, player.videoWidth())
-                        : screenW * 9 / 16;
-                break;
-            default:
-                h = screenW * 9 / 16;
-                break;
+        if (land) {
+            // 横屏铺满可用高度（沉浸后即整屏）
+            h = screenH;
+        } else {
+            switch (scaleMode) {
+                case 1:
+                    h = screenW * 9 / 16;
+                    break;
+                case 2:
+                    h = screenW * 3 / 4;
+                    break;
+                case 3:
+                    h = (int) (screenH * 0.55f);
+                    break;
+                case 4:
+                    h = player != null && player.videoHeight() > 0
+                            ? screenW * player.videoHeight() / Math.max(1, player.videoWidth())
+                            : screenW * 9 / 16;
+                    break;
+                default:
+                    h = screenW * 9 / 16;
+                    break;
+            }
+            // 竖屏限制最大高度，避免和详情区「叠成一整页」
+            int maxH = (int) (screenH * 0.48f);
+            if (h > maxH) h = maxH;
+            if (h < U.dp(180)) h = U.dp(180);
         }
-        if (isLandscape()) h = getResources().getDisplayMetrics().heightPixels;
         ViewGroup.LayoutParams lp = videoArea.getLayoutParams();
+        lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = h;
         videoArea.setLayoutParams(lp);
+    }
+
+    private void applySystemUi(boolean land) {
+        View decor = getWindow().getDecorView();
+        if (land) {
+            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            decor.setSystemUiVisibility(flags);
+            if (Build.VERSION.SDK_INT >= 21) {
+                getWindow().setStatusBarColor(0x00000000);
+                getWindow().setNavigationBarColor(0x00000000);
+            }
+        } else {
+            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            if (Build.VERSION.SDK_INT >= 21) {
+                getWindow().setStatusBarColor(0xff000000);
+                getWindow().setNavigationBarColor(0xff111111);
+            }
+        }
     }
 
     private boolean isLandscape() {
