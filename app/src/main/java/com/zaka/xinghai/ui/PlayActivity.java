@@ -157,26 +157,28 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
         if (scroll != null) scroll.setVisibility(land ? View.GONE : View.VISIBLE);
         applySystemUi(land);
 
-        int screenW = getResources().getDisplayMetrics().widthPixels;
-        int screenH = getResources().getDisplayMetrics().heightPixels;
+        // 用真实可见区域（横屏沉浸后用整个 decor）
+        View root = getWindow().getDecorView();
+        int screenW = root.getWidth() > 0 ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
+        int screenH = root.getHeight() > 0 ? root.getHeight() : getResources().getDisplayMetrics().heightPixels;
+
         ViewGroup.LayoutParams lp = videoArea.getLayoutParams();
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         if (land) {
-            // 横屏：占满整个窗口（沉浸后含状态栏区域）
             lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
             if (lp instanceof android.widget.LinearLayout.LayoutParams) {
                 ((android.widget.LinearLayout.LayoutParams) lp).weight = 1;
             }
         } else {
-            int h;
+            int h = screenW * 9 / 16;
             switch (scaleMode) {
                 case 1: h = screenW * 9 / 16; break;
                 case 2: h = screenW * 3 / 4; break;
                 case 3: h = (int) (screenH * 0.42f); break;
                 case 4:
-                    h = player != null && player.videoHeight() > 0
-                            ? screenW * player.videoHeight() / Math.max(1, player.videoWidth())
-                            : screenW * 9 / 16;
+                    if (player != null && player.videoHeight() > 0) {
+                        h = screenW * player.videoHeight() / Math.max(1, player.videoWidth());
+                    }
                     break;
                 default: h = screenW * 9 / 16; break;
             }
@@ -189,19 +191,73 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
             }
         }
         videoArea.setLayoutParams(lp);
-        videoArea.requestLayout();
+        videoArea.post(new Runnable() {
+            @Override
+            public void run() {
+                layoutSurface();
+            }
+        });
+    }
+
+    /** 按比例模式把 SurfaceView 放进 videoArea（解决横屏比例错误） */
+    private void layoutSurface() {
+        if (video == null || videoArea == null) return;
+        int aw = videoArea.getWidth();
+        int ah = videoArea.getHeight();
+        if (aw <= 0 || ah <= 0) return;
+        int vw = player != null ? player.videoWidth() : 0;
+        int vh = player != null ? player.videoHeight() : 0;
+        if (vw <= 0 || vh <= 0) {
+            // 未知比例：铺满
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            lp.gravity = android.view.Gravity.CENTER;
+            video.setLayoutParams(lp);
+            return;
+        }
+        float vr = vw * 1f / vh;
+        float ar = aw * 1f / ah;
+        int w, h;
+        // scaleMode: 0自适应 1=16:9 2=4:3 3铺满 4原始
+        int mode = scaleMode;
+        if (mode == 1) vr = 16f / 9f;
+        else if (mode == 2) vr = 4f / 3f;
+
+        if (mode == 3) {
+            // 铺满裁剪
+            if (vr > ar) {
+                h = ah;
+                w = (int) (ah * vr);
+            } else {
+                w = aw;
+                h = (int) (aw / vr);
+            }
+        } else {
+            // 完整显示（黑边）
+            if (vr > ar) {
+                w = aw;
+                h = (int) (aw / vr);
+            } else {
+                h = ah;
+                w = (int) (ah * vr);
+            }
+        }
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, h);
+        lp.gravity = android.view.Gravity.CENTER;
+        video.setLayoutParams(lp);
     }
 
     private void applySystemUi(boolean land) {
         View decor = getWindow().getDecorView();
         if (land) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
             if (Build.VERSION.SDK_INT >= 28) {
-                WindowManager.LayoutParams lp = getWindow().getAttributes();
-                lp.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams wp = getWindow().getAttributes();
+                wp.layoutInDisplayCutoutMode =
                         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-                getWindow().setAttributes(lp);
+                getWindow().setAttributes(wp);
             }
             int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -216,6 +272,7 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
             }
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
             if (Build.VERSION.SDK_INT >= 21) {

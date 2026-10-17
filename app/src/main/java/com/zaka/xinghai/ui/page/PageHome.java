@@ -20,6 +20,7 @@ import com.zaka.xinghai.model.Filter;
 import com.zaka.xinghai.model.Site;
 import com.zaka.xinghai.model.Vod;
 import com.zaka.xinghai.net.Cms;
+import com.zaka.xinghai.net.Spider;
 import com.zaka.xinghai.store.Store;
 import com.zaka.xinghai.ui.MainActivity;
 import com.zaka.xinghai.ui.Page;
@@ -228,7 +229,8 @@ public class PageHome extends Page {
             @Override
             public void run() {
                 try {
-                    final List<Cate> list = Cms.types(site);
+                    final List<Cate> list = (site.isScript() && !Spider.canUseAsCms(site))
+                            ? Spider.types(site) : Cms.types(site);
                     ui(new Runnable() {
                         @Override
                         public void run() {
@@ -277,7 +279,7 @@ public class PageHome extends Page {
             @Override
             public void run() {
                 try {
-                    final List<Vod> list = Cms.list(site, cateId, page, f);
+                    final List<Vod> list = ((site.isScript() && !Spider.canUseAsCms(site)) ? Spider.list(site, cateId, page, f) : Cms.list(site, cateId, page, f));
                     ui(new Runnable() {
                         @Override
                         public void run() {

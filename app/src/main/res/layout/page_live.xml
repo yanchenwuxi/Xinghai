@@ -3,8 +3,44 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/main_bg"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingTop="8dip">
 
+    <!-- 标题行 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dip"
+        android:paddingRight="10dip"
+        android:paddingBottom="6dip">
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="直播"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/live_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white_44"
+            android:textSize="12sp" />
+
+        <ImageView
+            android:id="@+id/live_refresh"
+            android:layout_width="36dip"
+            android:layout_height="36dip"
+            android:padding="8dip"
+            android:src="@drawable/ic_refresh" />
+    </LinearLayout>
+
+    <!-- 内嵌播放器 16:9 -->
     <FrameLayout
         android:id="@+id/live_player_box"
         android:layout_width="match_parent"
@@ -14,23 +50,31 @@
         <SurfaceView
             android:id="@+id/live_surface"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
 
-        <TextView
-            android:id="@+id/live_now"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/live_placeholder"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="#66000000"
-            android:ellipsize="end"
-            android:paddingLeft="12dip"
-            android:paddingTop="8dip"
-            android:paddingRight="12dip"
-            android:paddingBottom="8dip"
-            android:singleLine="true"
-            android:text="选择下方频道开始播放"
-            android:textColor="@color/white"
-            android:textSize="13sp" />
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:alpha="0.4"
+                android:src="@drawable/ic_live" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dip"
+                android:text="选择频道开始播放"
+                android:textColor="@color/white_44"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/live_spin"
@@ -39,41 +83,77 @@
             android:layout_gravity="center"
             android:indeterminateTint="@color/orange"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/live_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left|top"
+            android:layout_margin="8dip"
+            android:background="@drawable/bg_chip_on"
+            android:paddingLeft="8dip"
+            android:paddingTop="2dip"
+            android:paddingRight="8dip"
+            android:paddingBottom="2dip"
+            android:text="直播"
+            android:textColor="@color/orange"
+            android:textSize="11sp"
+            android:visibility="gone" />
     </FrameLayout>
 
+    <!-- 当前频道卡 -->
     <LinearLayout
+        android:id="@+id/live_now_card"
         android:layout_width="match_parent"
-        android:layout_height="40dip"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingLeft="12dip"
-        android:paddingRight="8dip">
+        android:paddingTop="10dip"
+        android:paddingRight="10dip"
+        android:paddingBottom="10dip">
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="电视直播"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/live_now"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="未播放"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/live_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dip"
+                android:text="点下方频道即可换台"
+                android:textColor="@color/white_44"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/live_count"
+            android:id="@+id/live_full"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="8dip"
-            android:textColor="@color/white_44"
+            android:layout_height="32dip"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:text="全屏"
+            android:textColor="@color/white"
             android:textSize="12sp" />
-
-        <ImageView
-            android:id="@+id/live_refresh"
-            android:layout_width="34dip"
-            android:layout_height="34dip"
-            android:padding="7dip"
-            android:src="@drawable/ic_refresh" />
     </LinearLayout>
 
+    <!-- 左分组 / 右频道 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dip"
@@ -82,9 +162,9 @@
 
         <ListView
             android:id="@+id/group_list"
-            android:layout_width="96dip"
+            android:layout_width="100dip"
             android:layout_height="match_parent"
-            android:background="#121212"
+            android:background="#101010"
             android:divider="@null"
             android:scrollbars="none" />
 
@@ -93,15 +173,14 @@
             android:layout_height="match_parent"
             android:layout_weight="1">
 
-            <GridView
-                android:id="@+id/channel_grid"
+            <ListView
+                android:id="@+id/channel_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:horizontalSpacing="8dip"
-                android:numColumns="2"
-                android:padding="8dip"
-                android:stretchMode="columnWidth"
-                android:verticalSpacing="8dip" />
+                android:divider="@null"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip"
+                android:scrollbars="none" />
 
             <TextView
                 android:id="@+id/live_empty"
