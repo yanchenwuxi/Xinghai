@@ -50,8 +50,8 @@ sed 's|<manifest |<manifest package="com.zaka.xinghai" |' "$SRC/AndroidManifest.
   --java "$GEN" \
   --min-sdk-version 21 \
   --target-sdk-version 34 \
-  --version-code 5 \
-  --version-name 2.0.2 \
+  --version-code 6 \
+  --version-name 2.0.3 \
   --auto-add-overlay \
   "$OUT/res.zip"
 

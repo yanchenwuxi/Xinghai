@@ -99,11 +99,25 @@ public class PlayActivity extends Activity implements XPlayer.Listener {
         c.startActivity(i);
     }
 
+    /** 详情页全屏：直接横屏进播放 */
+    public static void goLand(Context c, Vod v, int flag, int ep) {
+        handoff = v;
+        handoffFlag = flag;
+        handoffEp = ep;
+        Intent i = new Intent(c, PlayActivity.class);
+        i.putExtra("parse", true);
+        i.putExtra("land", true);
+        c.startActivity(i);
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         U.init(getResources());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (getIntent() != null && getIntent().getBooleanExtra("land", false)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
         setContentView(R.layout.activity_play);
         vod = handoff;
         handoff = null; // 尽早释放静态引用，降低竞态与泄漏

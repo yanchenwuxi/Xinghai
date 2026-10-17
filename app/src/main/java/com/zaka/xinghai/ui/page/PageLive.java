@@ -77,6 +77,32 @@ public class PageLive extends Page implements XPlayer.Listener {
                 load(true);
             }
         });
+        TextView logo = (TextView) v.findViewById(R.id.live_logo);
+        v.findViewById(R.id.live_swap).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 换源：提示去我的页改直播源，或简单输入
+                android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(act);
+                final android.widget.EditText et = new android.widget.EditText(act);
+                et.setHint("m3u 直播源地址");
+                et.setText(Store.liveUrl());
+                et.setTextColor(0xffffffff);
+                et.setHintTextColor(0x66ffffff);
+                b.setTitle("切换直播源");
+                b.setView(et);
+                b.setPositiveButton("确定", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface d, int w) {
+                        String u = et.getText().toString().trim();
+                        Store.setLiveUrl(u);
+                        Store.setLiveRaw("");
+                        load(true);
+                    }
+                });
+                b.setNegativeButton("取消", null);
+                b.show();
+            }
+        });
         v.findViewById(R.id.live_full).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -186,6 +212,13 @@ public class PageLive extends Page implements XPlayer.Listener {
         M3u.Channel c = list.get(index);
         playingUrl = c.url;
         now.setText(c.name);
+        if (this.root != null) {
+            TextView logoTv = (TextView) this.root.findViewById(R.id.live_logo);
+            if (logoTv != null) {
+                String n = c.name == null ? "TV" : c.name.trim();
+                logoTv.setText(n.length() > 0 ? n.substring(0, Math.min(2, n.length())) : "TV");
+            }
+        }
         status.setText("起播中…");
         spin.setVisibility(View.VISIBLE);
         placeholder.setVisibility(View.GONE);

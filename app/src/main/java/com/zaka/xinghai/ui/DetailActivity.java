@@ -50,8 +50,6 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
     private VodParts.Eps epsView;
     private int flagIndex = 0;
     private int epIndex = 0;
-    private final List<Vod> recommend = new ArrayList<Vod>();
-    private LinearLayout recommendBox;
 
     public static void go(Context c, Vod v) {
         handoff = v;
@@ -96,8 +94,8 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
         expand.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 全屏：移交到 PlayActivity（带当前集）
-                PlayActivity.go(DetailActivity.this, vod, flagIndex, epIndex, true);
+                // 右下角全屏：直接进横屏播放
+                PlayActivity.goLand(DetailActivity.this, vod, flagIndex, epIndex);
             }
         });
         playerBox.setOnClickListener(new View.OnClickListener() {
@@ -112,7 +110,6 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
 
         render(false);
         loadDetail();
-        loadRecommend();
     }
 
     private void render(boolean detail) {
@@ -158,28 +155,6 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
             content.addView(t);
         }
 
-        if (recommend.size() > 0) {
-            recommendBox = new LinearLayout(this);
-            recommendBox.setOrientation(LinearLayout.VERTICAL);
-            content.addView(recommendBox);
-            // 简化：文字提示
-            TextView rh = U.text(this, "相关推荐", 14, 0xffffffff);
-            rh.setPadding(U.dp(12), U.dp(14), U.dp(12), U.dp(6));
-            content.addView(rh);
-            for (int i = 0; i < Math.min(6, recommend.size()); i++) {
-                final Vod r = recommend.get(i);
-                TextView tv = U.text(this, "· " + r.name, 13, 0xffcccccc);
-                tv.setPadding(U.dp(14), U.dp(6), U.dp(12), U.dp(6));
-                tv.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DetailActivity.go(DetailActivity.this, r);
-                        finish();
-                    }
-                });
-                content.addView(tv);
-            }
-        }
     }
 
     private void playHere() {
@@ -245,33 +220,6 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
         });
     }
 
-    private void loadRecommend() {
-        final Site site = Store.site(vod.siteKey);
-        if (site == null) return;
-        App.run(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final List<Vod> list = Cms.list(site, "", 1, null);
-                    App.onUi(new Runnable() {
-                        @Override
-                        public void run() {
-                            recommend.clear();
-                            if (list != null) {
-                                for (Vod v : list) {
-                                    if (v.id != null && v.id.equals(vod.id)) continue;
-                                    recommend.add(v);
-                                    if (recommend.size() >= 8) break;
-                                }
-                            }
-                            render(true);
-                        }
-                    });
-                } catch (Throwable ignored) {
-                }
-            }
-        });
-    }
 
     private void refreshIcon() {
         boolean playing = player != null && player.isPlaying();

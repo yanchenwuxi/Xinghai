@@ -11,8 +11,8 @@ android {
         applicationId "com.zaka.xinghai"
         minSdk 21
         targetSdk 34
-        versionCode 5
-        versionName "2.0.2"
+        versionCode 6
+        versionName "2.0.3"
     }
 
     // 命令行脚本侧用 manifest 里的 package 属性，Android Studio 侧用 namespace，

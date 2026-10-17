@@ -62,13 +62,17 @@
                 android:textColor="@color/white"
                 android:textSize="14sp" />
 
-            <ImageView
-                android:id="@+id/detail_expand"
-                android:layout_width="36dip"
-                android:layout_height="36dip"
-                android:padding="8dip"
-                android:src="@drawable/ic_expand" />
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/detail_expand"
+            android:layout_width="44dip"
+            android:layout_height="44dip"
+            android:layout_gravity="right|bottom"
+            android:layout_margin="10dip"
+            android:background="@drawable/bg_circle_black60"
+            android:padding="10dip"
+            android:src="@drawable/ic_expand" />
     </FrameLayout>
 
     <FrameLayout

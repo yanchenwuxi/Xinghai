@@ -11,6 +11,7 @@ import android.os.Build;
 import android.provider.Settings;
 
 import com.zaka.xinghai.core.App;
+import com.zaka.xinghai.provider.ApkProvider;
 import com.zaka.xinghai.util.U;
 
 import org.json.JSONArray;
@@ -25,11 +26,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * 应用内更新：GitHub Release / 自定义 JSON → 下载 APK → PackageInstaller 安装。
+ * 应用内更新。
+ * 检查顺序：1) 仓库 update.json  2) GitHub Releases API
+ * 安装：PackageInstaller，失败则 ACTION_VIEW + ApkProvider。
  */
 public final class Updater {
 
-    public static final String DEFAULT_API =
+    /** 稳定、可缓存的更新描述（CI 每次发布写入） */
+    public static final String UPDATE_JSON =
+            "https://raw.githubusercontent.com/yanchenwuxi/Xinghai/main/update.json";
+    public static final String RELEASE_API =
             "https://api.github.com/repos/yanchenwuxi/Xinghai/releases/latest";
 
     public interface Listener {
@@ -70,44 +76,61 @@ public final class Updater {
     }
 
     public static void check(final Context ctx, final String apiUrl, final Listener l) {
-        if (l != null) {
-            App.onUi(new Runnable() {
-                @Override
-                public void run() {
-                    l.onChecking();
-                }
-            });
-        }
+        if (l != null) App.onUi(new Runnable() {
+            @Override
+            public void run() {
+                l.onChecking();
+            }
+        });
         App.run(new Runnable() {
             @Override
             public void run() {
                 try {
-                    final Info info = fetchInfo(U.empty(apiUrl) ? DEFAULT_API : apiUrl);
+                    Info info = null;
+                    String err = null;
+                    if (!U.empty(apiUrl)) {
+                        try {
+                            info = fetchInfo(apiUrl);
+                        } catch (Throwable t) {
+                            err = t.getMessage();
+                        }
+                    } else {
+                        try {
+                            info = fetchInfo(UPDATE_JSON);
+                        } catch (Throwable t1) {
+                            err = t1.getMessage();
+                            try {
+                                info = fetchInfo(RELEASE_API);
+                                err = null;
+                            } catch (Throwable t2) {
+                                err = (err == null ? "" : err + " / ") + t2.getMessage();
+                            }
+                        }
+                    }
+                    final Info out = info;
+                    final String e = err;
                     final int cur = currentCode(ctx);
                     final String curName = currentName(ctx);
                     App.onUi(new Runnable() {
                         @Override
                         public void run() {
                             if (l == null) return;
-                            if (info == null || U.empty(info.apkUrl)) {
-                                l.onError("未找到可用更新包（需 GitHub Release 上传 APK）");
+                            if (out == null || U.empty(out.apkUrl)) {
+                                l.onError("检查失败：" + (e == null ? "无更新源" : e));
                                 return;
                             }
-                            boolean newer = info.versionCode > cur
-                                    || (info.versionCode <= 0 && compareName(info.versionName, curName) > 0)
-                                    || (info.versionCode == cur && compareName(info.versionName, curName) > 0);
-                            if (newer) l.onAvailable(info);
-                            else l.onLatest(curName + " (" + cur + ")");
+                            boolean newer = out.versionCode > cur
+                                    || (out.versionCode <= 0 && compareName(out.versionName, curName) > 0);
+                            if (newer) l.onAvailable(out);
+                            else l.onLatest(curName + " (" + cur + ")，远端 "
+                                    + out.versionName + " (" + out.versionCode + ")");
                         }
                     });
                 } catch (final Throwable t) {
                     App.onUi(new Runnable() {
                         @Override
                         public void run() {
-                            if (l != null) {
-                                String m = t.getMessage();
-                                l.onError("检查失败：" + (m == null ? t.getClass().getSimpleName() : m));
-                            }
+                            if (l != null) l.onError("检查失败：" + t.getMessage());
                         }
                     });
                 }
@@ -116,9 +139,7 @@ public final class Updater {
     }
 
     public static Info fetchInfo(String api) throws Exception {
-        String body = Http.get(api, Http.headers(
-                "User-Agent", "Xinghai-Updater",
-                "Accept", "application/vnd.github+json"), 15000);
+        String body = getString(api);
         if (U.empty(body)) throw new Exception("空响应");
         JSONObject root = new JSONObject(body.trim());
 
@@ -134,11 +155,8 @@ public final class Updater {
 
         Info i = new Info();
         String tag = root.optString("tag_name", "");
-        i.versionName = tag.startsWith("v") || tag.startsWith("V") ? tag.substring(1) : tag;
+        i.versionName = tag.startsWith("v") ? tag.substring(1) : tag;
         i.notes = root.optString("body", "");
-        i.versionCode = root.optInt("versionCode", 0);
-        String name = root.optString("name", "");
-
         JSONArray assets = root.optJSONArray("assets");
         if (assets != null) {
             for (int k = 0; k < assets.length(); k++) {
@@ -148,29 +166,15 @@ public final class Updater {
                 if (!n.toLowerCase().endsWith(".apk")) continue;
                 i.apkUrl = a.optString("browser_download_url", "");
                 i.size = a.optLong("size", 0);
-                int c = parseCodeFromName(n);
-                if (c > 0) i.versionCode = c;
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("-(\\d{1,6})\\.apk$", java.util.regex.Pattern.CASE_INSENSITIVE)
+                        .matcher(n);
+                if (m.find()) i.versionCode = Integer.parseInt(m.group(1));
                 break;
             }
         }
-        if (i.versionCode <= 0) i.versionCode = parseCodeFromName(name);
-        if (i.versionCode <= 0) i.versionCode = parseCodeFromName(tag);
+        if (U.empty(i.apkUrl)) throw new Exception("Release 无 APK");
         return i;
-    }
-
-    /** xinghai-2.0.1-4.apk → 4 */
-    static int parseCodeFromName(String s) {
-        if (s == null) return 0;
-        java.util.regex.Matcher m = java.util.regex.Pattern
-                .compile("-(\\d{1,6})\\.apk$", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(s.trim());
-        if (m.find()) {
-            try {
-                return Integer.parseInt(m.group(1));
-            } catch (Throwable ignored) {
-            }
-        }
-        return 0;
     }
 
     static int compareName(String a, String b) {
@@ -204,10 +208,9 @@ public final class Updater {
         if (Build.VERSION.SDK_INT >= 26) {
             if (!act.getPackageManager().canRequestPackageInstalls()) {
                 try {
-                    Intent i = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                            Uri.parse("package:" + act.getPackageName()));
-                    act.startActivity(i);
-                    if (l != null) l.onError("请先允许「安装未知应用」，再点检查更新");
+                    act.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:" + act.getPackageName())));
+                    if (l != null) l.onError("请允许「安装未知应用」后重试");
                 } catch (Throwable t) {
                     if (l != null) l.onError("无法打开安装权限设置");
                 }
@@ -232,24 +235,19 @@ public final class Updater {
                             try {
                                 install(act, f);
                             } catch (Throwable t) {
-                                if (l != null) l.onError("安装失败：" + t.getMessage());
+                                try {
+                                    installIntent(act, f);
+                                } catch (Throwable t2) {
+                                    if (l != null) l.onError("安装失败：" + t2.getMessage());
+                                }
                             }
                         }
                     });
                 } catch (final Throwable t) {
-                    if (apk != null) {
-                        try {
-                            apk.delete();
-                        } catch (Throwable ignored) {
-                        }
-                    }
                     App.onUi(new Runnable() {
                         @Override
                         public void run() {
-                            if (l != null) {
-                                String m = t.getMessage();
-                                l.onError("下载失败：" + (m == null ? "网络错误" : m));
-                            }
+                            if (l != null) l.onError("下载失败：" + t.getMessage());
                         }
                     });
                 }
@@ -257,96 +255,121 @@ public final class Updater {
         });
     }
 
-    private static void download(String url, File out, long expect, final Listener l) throws Exception {
-        HttpURLConnection conn = null;
-        InputStream in = null;
-        FileOutputStream fos = null;
-        try {
-            URL u = new URL(url);
-            conn = (HttpURLConnection) u.openConnection();
-            conn.setInstanceFollowRedirects(true);
-            conn.setConnectTimeout(15000);
-            conn.setReadTimeout(120000);
-            conn.setRequestProperty("User-Agent", "Xinghai-Updater");
-            conn.setRequestProperty("Accept", "*/*");
+    private static String getString(String url) throws Exception {
+        HttpURLConnection conn = open(url);
+        int code = conn.getResponseCode();
+        if (code >= 400) throw new Exception("HTTP " + code);
+        InputStream in = conn.getInputStream();
+        byte[] raw = U.readAll(in);
+        in.close();
+        conn.disconnect();
+        return new String(raw, "UTF-8");
+    }
+
+    private static HttpURLConnection open(String url) throws Exception {
+        URL u = new URL(url);
+        HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+        conn.setInstanceFollowRedirects(true);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(60000);
+        conn.setRequestProperty("User-Agent", "Xinghai-Updater");
+        conn.setRequestProperty("Accept", "*/*");
+        // 手动跟随有限次重定向（部分机型 setInstanceFollowRedirects 对 HTTPS 不生效）
+        for (int i = 0; i < 5; i++) {
             int code = conn.getResponseCode();
-            if (code >= 400) throw new Exception("HTTP " + code);
-            long total = conn.getContentLength();
-            if (total <= 0 && expect > 0) total = expect;
-            in = conn.getInputStream();
-            fos = new FileOutputStream(out);
-            byte[] buf = new byte[8192];
-            long read = 0;
-            int n, lastPct = -1;
-            while ((n = in.read(buf)) > 0) {
-                fos.write(buf, 0, n);
-                read += n;
-                if (l != null && total > 0) {
-                    final int pct = (int) (read * 100 / total);
-                    final long r = read, tt = total;
-                    if (pct != lastPct) {
-                        lastPct = pct;
-                        App.onUi(new Runnable() {
-                            @Override
-                            public void run() {
-                                l.onProgress(pct, r, tt);
-                            }
-                        });
-                    }
+            if (code == 301 || code == 302 || code == 303 || code == 307 || code == 308) {
+                String loc = conn.getHeaderField("Location");
+                conn.disconnect();
+                if (U.empty(loc)) throw new Exception("重定向无 Location");
+                conn = (HttpURLConnection) new URL(loc).openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(60000);
+                conn.setRequestProperty("User-Agent", "Xinghai-Updater");
+                continue;
+            }
+            break;
+        }
+        return conn;
+    }
+
+    private static void download(String url, File out, long expect, final Listener l) throws Exception {
+        HttpURLConnection conn = open(url);
+        int code = conn.getResponseCode();
+        if (code >= 400) throw new Exception("HTTP " + code);
+        long total = conn.getContentLength();
+        if (total <= 0 && expect > 0) total = expect;
+        InputStream in = conn.getInputStream();
+        FileOutputStream fos = new FileOutputStream(out);
+        byte[] buf = new byte[8192];
+        long read = 0;
+        int n, last = -1;
+        while ((n = in.read(buf)) > 0) {
+            fos.write(buf, 0, n);
+            read += n;
+            if (l != null && total > 0) {
+                final int pct = (int) (read * 100 / total);
+                final long r = read, tt = total;
+                if (pct != last) {
+                    last = pct;
+                    App.onUi(new Runnable() {
+                        @Override
+                        public void run() {
+                            l.onProgress(pct, r, tt);
+                        }
+                    });
                 }
             }
-            fos.flush();
-            if (read < 1024) throw new Exception("文件过小，可能不是有效 APK");
-        } finally {
-            try {
-                if (fos != null) fos.close();
-            } catch (Throwable ignored) {
-            }
-            try {
-                if (in != null) in.close();
-            } catch (Throwable ignored) {
-            }
-            if (conn != null) conn.disconnect();
         }
+        fos.close();
+        in.close();
+        conn.disconnect();
+        if (read < 1024) throw new Exception("文件过小");
     }
 
     private static void install(Activity act, File apk) throws Exception {
         if (Build.VERSION.SDK_INT >= 21) {
-            installSession(act, apk);
+            PackageInstaller installer = act.getPackageManager().getPackageInstaller();
+            PackageInstaller.SessionParams params =
+                    new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+            try {
+                OutputStream os = session.openWrite("pkg", 0, apk.length());
+                FileInputStream is = new FileInputStream(apk);
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = is.read(buf)) > 0) os.write(buf, 0, n);
+                session.fsync(os);
+                is.close();
+                os.close();
+                Intent callback = new Intent(act, act.getClass());
+                callback.setAction("com.zaka.xinghai.UPDATE_INSTALL");
+                int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
+                PendingIntent pi = PendingIntent.getActivity(act, sessionId, callback, flags);
+                session.commit(pi.getIntentSender());
+            } catch (Throwable t) {
+                session.abandon();
+                throw t;
+            } finally {
+                session.close();
+            }
         } else {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setDataAndType(Uri.fromFile(apk), "application/vnd.android.package-archive");
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            act.startActivity(i);
+            installIntent(act, apk);
         }
     }
 
-    private static void installSession(Activity act, File apk) throws Exception {
-        PackageInstaller installer = act.getPackageManager().getPackageInstaller();
-        PackageInstaller.SessionParams params =
-                new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        int sessionId = installer.createSession(params);
-        PackageInstaller.Session session = installer.openSession(sessionId);
-        try {
-            OutputStream os = session.openWrite("pkg", 0, apk.length());
-            FileInputStream is = new FileInputStream(apk);
-            byte[] buf = new byte[65536];
-            int n;
-            while ((n = is.read(buf)) > 0) os.write(buf, 0, n);
-            session.fsync(os);
-            is.close();
-            os.close();
-            Intent callback = new Intent(act, act.getClass());
-            callback.setAction("com.zaka.xinghai.UPDATE_INSTALL");
-            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-            if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
-            PendingIntent pi = PendingIntent.getActivity(act, sessionId, callback, flags);
-            session.commit(pi.getIntentSender());
-        } catch (Throwable t) {
-            session.abandon();
-            throw t;
-        } finally {
-            session.close();
+    private static void installIntent(Activity act, File apk) throws Exception {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT >= 24) {
+            Uri uri = ApkProvider.apkUri();
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            i.setDataAndType(Uri.fromFile(apk), "application/vnd.android.package-archive");
         }
+        act.startActivity(i);
     }
 }
