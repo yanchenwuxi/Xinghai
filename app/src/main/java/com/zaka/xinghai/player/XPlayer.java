@@ -138,16 +138,40 @@ public class XPlayer implements SurfaceHolder.Callback,
         return videoH;
     }
 
-    public void setSpeed(float s) {
+    /** @return 是否成功设置倍速 */
+    public boolean setSpeed(float s) {
         speed = s;
         try {
             if (mp != null && prepared && Build.VERSION.SDK_INT >= 23) {
                 android.media.PlaybackParams p = mp.getPlaybackParams();
                 p.setSpeed(speed);
                 mp.setPlaybackParams(p);
+                return true;
+            }
+            return Build.VERSION.SDK_INT < 23 && s == 1f;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 音轨列表（MediaPlayer 能力有限，返回占位信息） */
+    public java.util.List<String> tracks() {
+        java.util.ArrayList<String> out = new java.util.ArrayList<String>();
+        try {
+            if (mp != null && prepared && Build.VERSION.SDK_INT >= 16) {
+                android.media.MediaPlayer.TrackInfo[] infos = mp.getTrackInfo();
+                if (infos != null) {
+                    int i = 0;
+                    for (android.media.MediaPlayer.TrackInfo ti : infos) {
+                        if (ti.getTrackType() == android.media.MediaPlayer.TrackInfo.MEDIA_TRACK_TYPE_AUDIO) {
+                            out.add("音轨 " + (++i));
+                        }
+                    }
+                }
             }
         } catch (Throwable ignored) {
         }
+        return out;
     }
 
     public void play(final String u) {
