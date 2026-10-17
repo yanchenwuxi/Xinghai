@@ -227,7 +227,7 @@ public class DetailActivity extends Activity implements XPlayer.Listener {
                                     vod.flags = d.flags;
                                     vod.episodes = d.episodes;
                                 }
-                                if (!U.empty(d.des)) vod.des = d.des;
+                                if (!U.empty(d.content)) vod.content = d.content;
                                 title.setText(vod.name);
                                 render(true);
                             }
